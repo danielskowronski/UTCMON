@@ -6,5 +6,5 @@
 
 ## pin numbers for buses
 
-- 18: SCLK
-- 23: MOSI/SDI
+- 18: VSPI SCLK
+- 23: VSPI MOSI/SDI
