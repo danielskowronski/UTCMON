@@ -1,6 +1,7 @@
 #pragma once
 #include <Arduino.h>
 #include <Adafruit_VL53L0X.h>
+#include "UI.h"
 
 namespace LeftBus {
   namespace I2C {
@@ -20,11 +21,11 @@ namespace LeftBus {
     Adafruit_VL53L0X::VL53L0X_Sense_config_t Mode = Adafruit_VL53L0X::VL53L0X_SENSE_HIGH_SPEED;
   };
   namespace Display {
-    uint32_t Frequency = 15000000;
-    enum : uint8_t {
-      CS = 5,
-      DC = 0,
-      RESET = 4
+    DisplayConfig config {
+      .Frequency = 15000000,
+      .CS = 5,
+      .DC = 0,
+      .RESET = 4
     };
   };
 }
@@ -46,11 +47,11 @@ namespace RightBus {
     Adafruit_VL53L0X::VL53L0X_Sense_config_t Mode = Adafruit_VL53L0X::VL53L0X_SENSE_HIGH_SPEED;
   };
   namespace Display {
-    uint32_t Frequency = 15000000;
-    enum : uint8_t {
-      CS = 25,
-      DC = 26,
-      RESET = 27
+    DisplayConfig config {
+      .Frequency = 15000000,
+      .CS = 25,
+      .DC = 26,
+      .RESET = 27
     };
   };
 }
