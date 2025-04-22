@@ -1,10 +1,11 @@
+#include <Arduino.h>
+
 #define VER_INFO "v0.2.0 2025-04-09"
 #include <SPI.h>
 #include <U8g2lib.h>
 #include <WiFi.h>
 #include <AceTime.h>
 #include <time.h>
-#include "Secrets.h"
 
 #include <Wire.h>
 #include <Adafruit_VL53L0X.h>
