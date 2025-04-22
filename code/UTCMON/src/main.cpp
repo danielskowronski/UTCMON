@@ -1,4 +1,4 @@
-#define VERSION "v0.2.1"
+#define VERSION "v0.2.2"
 #ifndef BUILD_DATE
   #define BUILD_DATE "YYYY-MM-DD"
 #endif
@@ -8,6 +8,9 @@
 
 #include "hw_config.h"
 #include "DateTime.h"
+#include "UI.h"
+#include "LightSensors.h"
+#include "common.h"
 
 #include <SPI.h>
 #include <U8g2lib.h>
@@ -20,32 +23,27 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_TSL2561_U.h>
 
-TwoWire I2C_l = TwoWire(LeftBus::I2C::Bus);
-TwoWire I2C_r = TwoWire(RightBus::I2C::Bus);
 
 Adafruit_VL53L0X lox_l = Adafruit_VL53L0X();
 Adafruit_VL53L0X lox_r = Adafruit_VL53L0X();
 
-Adafruit_TSL2561_Unified tsl_l = Adafruit_TSL2561_Unified(LeftBus::LightSensor::I2CAddress);
-Adafruit_TSL2561_Unified tsl_r = Adafruit_TSL2561_Unified(RightBus::LightSensor::I2CAddress);
-
 
 DateTime dt;
 UI ui(LeftBus::Display::config, RightBus::Display::config);
+LightSensors light(LeftBus::LightSensor::config, RightBus::LightSensor::config);
 void setup() {
   Serial.begin(CommonBus::Serial::Baudrate);
-
   WiFi.begin(WIFI_SSID, WIFI_PASS);
-
   SPI.setFrequency(CommonBus::SPI::Frequency);
-
-  ui.drawSplashScreen(VER_INFO);
-
-
+  // TODO: Wire+Wire1 vs custom TwoWire instances; per-class vs global
   Wire.begin(LeftBus::I2C::SDA, LeftBus::I2C::SCL);
   Wire1.begin(RightBus::I2C::SDA, RightBus::I2C::SCL);
-  I2C_l.begin(LeftBus::I2C::SDA, LeftBus::I2C::SCL, LeftBus::I2C::Frequency);
-  I2C_r.begin(RightBus::I2C::SDA, RightBus::I2C::SCL, RightBus::I2C::Frequency); 
+
+  ui.init(); // TODO: check init success
+  ui.drawSplashScreen(VER_INFO);
+
+  DevicePairInitSuccess lightInitSuccess = light.init();
+
 
   delay(250);
   bool lox_ok_l = lox_l.begin(LeftBus::DistanceSensor::I2CAddress, LeftBus::DistanceSensor::DebugEnabled, &Wire);
@@ -57,15 +55,9 @@ void setup() {
   if (lox_ok_r) lox_r.configSensor(RightBus::DistanceSensor::Mode);
   delay(250);
 
-  bool tsl_ok_l = tsl_l.begin(&Wire);
-  Serial.printf("tsl_l.begin() %1d\n", tsl_ok_l);
-  delay(250);
-  bool tsl_ok_r = tsl_r.begin(&Wire1);
-  Serial.printf("tsl_r.begin() %1d\n", tsl_ok_r);
-  delay(250);
 
 
-  ui.drawInitScreenSensor(VER_INFO, lox_ok_l, tsl_ok_l, lox_ok_r, tsl_ok_r);
+  ui.drawInitScreenSensor(VER_INFO, lox_ok_l, lightInitSuccess.left, lox_ok_r, lightInitSuccess.right);
 
   ui.drawInitScreenNetPhase1(WIFI_SSID);
 
@@ -102,7 +94,8 @@ sensors_event_t event_l;
 sensors_event_t event_r;
 int avg_lux;
 int contrast=255;
-
+int lux_l; // only for debug phase
+int lux_r; // only for debug phase
 DateTimeStruct dts;
 void loop() {
   dts=dt.getDateTimeStruct();
@@ -111,15 +104,15 @@ void loop() {
   lox_l.rangingTest(&measure_l, false);
   lox_r.rangingTest(&measure_r, false);
 
-  tsl_l.getEvent(&event_l);
-  tsl_r.getEvent(&event_r);
-  avg_lux = int((int(event_l.light)+int(event_r.light))/2);
-  if (avg_lux>512) contrast=255; else contrast=int(avg_lux/2);
+  lux_l = light.getLeft();
+  lux_r = light.getRight();
+  avg_lux = light.getAvg();
+  if (avg_lux>512) contrast=255; else contrast=int(avg_lux/2); // TODO: move contrast calc to some better place + parametrize values
   Serial.printf("lux: L=%05d R=%05d AVG=%05d => contrast=%03d\n", int(event_l.light), int(event_r.light), avg_lux, contrast);
   ui.setContrast(contrast);
 
 
-  ui.drawClock(dts, int(measure_l.RangeMilliMeter), int(measure_r.RangeMilliMeter), int(event_l.light), int(event_r.light));
+  ui.drawClock(dts, int(measure_l.RangeMilliMeter), int(measure_r.RangeMilliMeter), lux_l, lux_r);
 
   delay(250); 
 }

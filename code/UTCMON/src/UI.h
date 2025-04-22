@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <U8g2lib.h>
 #include <DateTime.h>
+#include "common.h"
 
 struct DisplayConfig {
   uint32_t Frequency;
@@ -17,8 +18,11 @@ class UI
 private:
   U8G2 left;
   U8G2 right;
+  DisplayConfig leftConfig;
+  DisplayConfig rightConfig;
 public:
   UI(DisplayConfig leftConfig, DisplayConfig rightConfig);
+  DevicePairInitSuccess init();
   void drawSplashScreen(String version);
   void drawInitScreenSensor(String version, bool leftDistanceSensor, bool leftLightSensor, bool rightDistanceSensor, bool rightLightSensor);
   void drawInitScreenNetPhase1(String ssid);

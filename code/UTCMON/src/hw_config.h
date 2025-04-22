@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include <Adafruit_VL53L0X.h>
 #include "UI.h"
+#include "LightSensors.h"
 
 namespace LeftBus {
   namespace I2C {
@@ -13,7 +14,13 @@ namespace LeftBus {
     };
   };
   namespace LightSensor {
-    uint8_t I2CAddress = 0x39;
+    LightSensorConfig config {
+      .I2CAddress = 0x39,
+      .DebugEnabled = false,
+      .AutoRangeEnabled = true,
+      .IntegrationTime = TSL2561_INTEGRATIONTIME_402MS,
+      .Gain = TSL2561_GAIN_16X
+    };
   };
   namespace DistanceSensor {
     bool DebugEnabled = false;
@@ -39,6 +46,13 @@ namespace RightBus {
     };
   };
   namespace LightSensor {
+    LightSensorConfig config {
+      .I2CAddress = 0x39,
+      .DebugEnabled = false,
+      .AutoRangeEnabled = true,
+      .IntegrationTime = TSL2561_INTEGRATIONTIME_402MS,
+      .Gain = TSL2561_GAIN_16X
+    };
     uint8_t I2CAddress = 0x39;
   };
   namespace DistanceSensor {

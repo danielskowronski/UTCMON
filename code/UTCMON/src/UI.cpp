@@ -1,15 +1,21 @@
 #include "UI.h"
+#include "common.h"
 #include <U8g2lib.h>
 
 UI::UI(DisplayConfig leftConfig, DisplayConfig rightConfig){
+  this->leftConfig = leftConfig;
+  this->rightConfig = rightConfig;
+}
+DevicePairInitSuccess UI::init(){
+  DevicePairInitSuccess initSuccess;
   this->left = U8G2_SSD1322_NHD_256X64_F_4W_HW_SPI(U8G2_R0, leftConfig.CS, leftConfig.DC, leftConfig.RESET);
   this->left.setBusClock(leftConfig.Frequency);
-  this->left.begin();
+  initSuccess.left = this->left.begin();
   this->right = U8G2_SSD1322_NHD_256X64_F_4W_HW_SPI(U8G2_R0, rightConfig.CS, rightConfig.DC, rightConfig.RESET);
   this->right.setBusClock(rightConfig.Frequency);
-  this->right.begin();
+  initSuccess.right = this->right.begin();
+  return initSuccess;
 }
-
 void UI::drawClock(DateTimeStruct dt, int mm_l, int mm_r, int lux_l, int lux_r){
   char buffer[256];
 
