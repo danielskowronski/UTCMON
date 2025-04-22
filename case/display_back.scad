@@ -1,6 +1,6 @@
 include <display_common.scad>;
 
-module back(){
+module display_back(){
     base_plate();
     
     //top wall
@@ -20,4 +20,4 @@ module back(){
         
 }
 
-back();
+display_back();

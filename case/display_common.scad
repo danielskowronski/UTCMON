@@ -1,17 +1,14 @@
-include <BOSL2/std.scad>
-include <BOSL2/screws.scad>
+include <common.scad>
 
 // design for LEFT display board, mirror in slicer
 // 0,0 = left-bottom (side of distance sensor)
 
-$fa = 1;
-$fs = 0.5;
-$fn=36;
+
 
 total_width=150;
 total_height=40;
 wall_thickness=2;
-wall_full=21.5; // between inside of front and back = 5+10+5 (distance/standoffs) + 1.5mm (board thickness)
+wall_full=5+back_board_thickness+10; // between inside of front and back = 5+10+5 (distance/standoffs) + 1.5mm (board thickness)
 
 display_window_width=79;
 display_window_height=22;
@@ -26,8 +23,6 @@ display_board_screw_offset_y=2.0; //??
 
 back_board_width=140.25;
 back_board_height=30;
-back_board_screw_dia=2;
-back_board_screw_offset=1.75; //2?
 
 distance_sensor_board_offset_from_back_board_x=9; 
 distance_sensor_board_offset_from_back_board_y=0;
@@ -61,24 +56,4 @@ bottom_wall_top =  wall_full-front_wall_top;
 
 rnd = wall_thickness/2;
 
-module base_plate_screw(){
-    //TODO: autolmate offset
-//    cylinder(wall_thickness, back_board_screw_dia/2, back_board_screw_dia/2);
-    color("red")
-    translate([0,0,wall_thickness+rnd/3])
-    screw_hole("M2,10",head="flat",counterbore=0,anchor=TOP);
-}
 
-module base_plate(){
-    difference(){
-        cuboid([total_width, total_height, wall_thickness], anchor=[-1,-1,-1], rounding=rnd, edges=[TOP, "Z"]); // main front/back
-        //cube([total_width, total_height, wall_thickness]); // main front/back
-
-        translate([(total_width-back_board_width)/2+back_board_screw_offset,(total_height-back_board_height)/2+back_board_screw_offset,0]) base_plate_screw(); 
-        translate([(total_width+back_board_width)/2-back_board_screw_offset,(total_height-back_board_height)/2+back_board_screw_offset,0]) base_plate_screw();
-        translate([(total_width-back_board_width)/2+back_board_screw_offset,(total_height+back_board_height)/2-back_board_screw_offset,0]) base_plate_screw();
-        translate([(total_width+back_board_width)/2-back_board_screw_offset,(total_height+back_board_height)/2-back_board_screw_offset,0]) base_plate_screw();
-
-    }
-
-}
