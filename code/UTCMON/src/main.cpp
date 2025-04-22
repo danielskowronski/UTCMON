@@ -1,6 +1,13 @@
+#define VERSION "v0.2.1"
+#ifndef BUILD_DATE
+  #define BUILD_DATE "YYYY-MM-DD"
+#endif
+#define VER_INFO VERSION " " BUILD_DATE
+
 #include <Arduino.h>
 
-#define VER_INFO "v0.2.0 2025-04-09"
+#include "hw_config.h"
+
 #include <SPI.h>
 #include <U8g2lib.h>
 #include <WiFi.h>
@@ -21,17 +28,17 @@ static ExtendedZoneManager manager(
     zonedbx::kZoneAndLinkRegistry,
     zoneProcessorCache);
 
-TwoWire I2C_l = TwoWire(0);
-TwoWire I2C_r = TwoWire(1);
+TwoWire I2C_l = TwoWire(LeftBus::I2C::Bus);
+TwoWire I2C_r = TwoWire(RightBus::I2C::Bus);
 
 Adafruit_VL53L0X lox_l = Adafruit_VL53L0X();
 Adafruit_VL53L0X lox_r = Adafruit_VL53L0X();
 
-Adafruit_TSL2561_Unified tsl_l = Adafruit_TSL2561_Unified(0x39);
-Adafruit_TSL2561_Unified tsl_r = Adafruit_TSL2561_Unified(0x39);
+Adafruit_TSL2561_Unified tsl_l = Adafruit_TSL2561_Unified(LeftBus::LightSensor::I2CAddress);
+Adafruit_TSL2561_Unified tsl_r = Adafruit_TSL2561_Unified(RightBus::LightSensor::I2CAddress);
 
-U8G2_SSD1322_NHD_256X64_F_4W_HW_SPI u8g2_l(U8G2_R0, /* cs=*/ 5, /* dc=*/ 0, /* reset=*/ 4);
-U8G2_SSD1322_NHD_256X64_F_4W_HW_SPI u8g2_r(U8G2_R0, /* cs=*/ 25, /* dc=*/ 26, /* reset=*/ 27);
+U8G2_SSD1322_NHD_256X64_F_4W_HW_SPI u8g2_l(U8G2_R0, LeftBus::Display::CS,  LeftBus::Display::DC,  LeftBus::Display::RESET);
+U8G2_SSD1322_NHD_256X64_F_4W_HW_SPI u8g2_r(U8G2_R0, RightBus::Display::CS, RightBus::Display::DC, RightBus::Display::RESET);
 
 
 int computeIsoWeekNumber(int year, int month, int day) {
@@ -126,13 +133,13 @@ void drawClock(int year, int month, int day, int week, const char* weekday, int 
 
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(CommonBus::Serial::Baudrate);
 
   WiFi.begin(WIFI_SSID, WIFI_PASS);
 
-  SPI.setFrequency(15000000);
-  u8g2_l.setBusClock(15000000);
-  u8g2_r.setBusClock(15000000);
+  SPI.setFrequency(CommonBus::SPI::Frequency);
+  u8g2_l.setBusClock(LeftBus::Display::Frequency);
+  u8g2_r.setBusClock(RightBus::Display::Frequency);
   u8g2_l.begin();
   u8g2_r.begin();
 
@@ -157,19 +164,19 @@ void setup() {
   u8g2_r.setDrawColor(1);
   u8g2_r.sendBuffer();
 
-  Wire.begin(21, 22);
-  Wire1.begin(32, 33);
-  I2C_l.begin(21, 22, 100000);
-  I2C_r.begin(32, 33, 100000); 
+  Wire.begin(LeftBus::I2C::SDA, LeftBus::I2C::SCL);
+  Wire1.begin(RightBus::I2C::SDA, RightBus::I2C::SCL);
+  I2C_l.begin(LeftBus::I2C::SDA, LeftBus::I2C::SCL, LeftBus::I2C::Frequency);
+  I2C_r.begin(RightBus::I2C::SDA, RightBus::I2C::SCL, RightBus::I2C::Frequency); 
 
   delay(250);
-  bool lox_ok_l = lox_l.begin(0x29, false, &Wire);
+  bool lox_ok_l = lox_l.begin(LeftBus::DistanceSensor::I2CAddress, LeftBus::DistanceSensor::DebugEnabled, &Wire);
   Serial.printf("lox_l.begin() %1d\n", lox_ok_l);
-  if (lox_ok_l) lox_l.configSensor(Adafruit_VL53L0X::VL53L0X_SENSE_HIGH_SPEED);
+  if (lox_ok_l) lox_l.configSensor(LeftBus::DistanceSensor::Mode);
   delay(250);
-  bool lox_ok_r = lox_r.begin(0x29, false, &Wire1);
+  bool lox_ok_r = lox_r.begin(RightBus::DistanceSensor::I2CAddress, RightBus::DistanceSensor::DebugEnabled, &Wire1);
   Serial.printf("lox_r.begin() %1d\n", lox_ok_r);
-  if (lox_ok_r) lox_r.configSensor(Adafruit_VL53L0X::VL53L0X_SENSE_HIGH_SPEED);
+  if (lox_ok_r) lox_r.configSensor(RightBus::DistanceSensor::Mode);
   delay(250);
 
   bool tsl_ok_l = tsl_l.begin(&Wire);
