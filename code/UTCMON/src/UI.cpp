@@ -113,7 +113,7 @@ void UI::drawInitScreenNetPhase1(String ssid){
 }
 void UI::drawInitScreenNetPhase2(){
   this->right.drawStr(0,40,"Wi-Fi connected       ");
-  this->right.drawStr(0,40,"NTP initializing...");
+  this->right.drawStr(0,60,"NTP initializing...");
   this->right.sendBuffer();
 }
 void UI::drawInitScreenNetPhase3(){

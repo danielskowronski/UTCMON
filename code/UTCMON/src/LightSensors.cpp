@@ -21,15 +21,21 @@ DevicePairInitSuccess LightSensors::init() {
   }
   return initSuccess;
 }
-int LightSensors::getLeft() {
+int LightSensors::getLight(Adafruit_TSL2561_Unified &sensor) {
   sensors_event_t event;
-  this->left.getEvent(&event);
-  return event.light;
+  sensor.getEvent(&event);
+  if (event.light) {
+    return event.light;
+  }
+  else {
+    return 0;
+  }
+}
+int LightSensors::getLeft() {
+  return getLight(this->left);
 }
 int LightSensors::getRight() {
-  sensors_event_t event;
-  this->right.getEvent(&event);
-  return event.light;
+  return getLight(this->right);
 }
 int LightSensors::getAvg() {
   return (this->getLeft() + this->getRight()) / 2;

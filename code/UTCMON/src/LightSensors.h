@@ -22,6 +22,7 @@ private:
   Adafruit_TSL2561_Unified right;
   LightSensorConfig leftConfig;
   LightSensorConfig rightConfig;
+  int getLight(Adafruit_TSL2561_Unified &sensor);
 public:
   LightSensors(LightSensorConfig leftConfig, LightSensorConfig rightConfig);
   DevicePairInitSuccess init();
