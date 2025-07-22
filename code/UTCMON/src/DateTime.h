@@ -21,6 +21,7 @@ struct DateTimeStruct {
   int minute;
   int second;
   String timezone;
+  uint64_t timestamp;
 };
 
 class DateTime {

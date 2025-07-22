@@ -6,15 +6,43 @@ UI::UI(DisplayConfig leftConfig, DisplayConfig rightConfig){
   this->leftConfig = leftConfig;
   this->rightConfig = rightConfig;
 }
+void UI::sendBuffer(U8G2 &screen) {
+  noInterrupts();
+  screen.sendBuffer();
+  interrupts();
+}
 DevicePairInitSuccess UI::init(){
   DevicePairInitSuccess initSuccess;
   this->left = U8G2_SSD1322_NHD_256X64_F_4W_HW_SPI(U8G2_R0, leftConfig.CS, leftConfig.DC, leftConfig.RESET);
   this->left.setBusClock(leftConfig.Frequency);
   initSuccess.left = this->left.begin();
+  
   this->right = U8G2_SSD1322_NHD_256X64_F_4W_HW_SPI(U8G2_R0, rightConfig.CS, rightConfig.DC, rightConfig.RESET);
   this->right.setBusClock(rightConfig.Frequency);
   initSuccess.right = this->right.begin();
+
+  this->resetScreens();
+
   return initSuccess;
+}
+void UI::resetOneScreen(U8G2 &screen){
+  screen.clearBuffer();
+  this->sendBuffer(screen);
+
+  delayMicroseconds(1*1000);
+
+  screen.setDrawColor(1);
+  screen.drawBox(0, 0, 256, 64);
+  this->sendBuffer(screen);
+
+  delayMicroseconds(1*1000);
+
+  screen.clearBuffer();
+  this->sendBuffer(screen);
+}
+void UI::resetScreens(){
+  this->resetOneScreen(this->left);
+  this->resetOneScreen(this->right);
 }
 void UI::drawClock(DateTimeStruct dt, int mm_l, int mm_r, int lux_l, int lux_r){
   char buffer[256];
@@ -47,7 +75,7 @@ void UI::drawClock(DateTimeStruct dt, int mm_l, int mm_r, int lux_l, int lux_r){
   this->left.setFont(u8g2_font_t0_12_tr);
   this->left.drawStr(200,20,buffer);
 
-  this->left.sendBuffer();
+  this->sendBuffer(this->left);
 
   this->right.clearBuffer();
 
@@ -66,7 +94,7 @@ void UI::drawClock(DateTimeStruct dt, int mm_l, int mm_r, int lux_l, int lux_r){
   this->right.setFont(u8g2_font_logisoso16_tr);
   this->right.drawStr(5*36+26+5*(strlen(dt.timezone.c_str())%2),16,buffer);
 
-  this->right.sendBuffer();
+  this->sendBuffer(this->right);
 }
 void UI::drawSplashScreen(String version){
   this->left.clearBuffer();
@@ -77,7 +105,7 @@ void UI::drawSplashScreen(String version){
   this->left.setFont(u8g2_font_profont17_mr);
   this->left.drawStr(0,60,version.c_str());
   this->left.setDrawColor(1);
-  this->left.sendBuffer();
+  this->sendBuffer(this->left);
 
   this->right.clearBuffer();
   this->right.drawBox(0,0,256,64);
@@ -87,11 +115,12 @@ void UI::drawSplashScreen(String version){
   this->right.setFont(u8g2_font_profont17_mr);
   this->right.drawStr(0,60,"Initializing................................");
   this->right.setDrawColor(1);
-  this->right.sendBuffer();
+  this->sendBuffer(this->right);
 }
 void UI::drawInitScreenSensor(String version, bool leftDistanceSensor, bool leftLightSensor, bool rightDistanceSensor, bool rightLightSensor){
   // TODO: fix this monstrosity (ported from proof of concept)
   char buffer[256];
+
   this->left.clearBuffer();
   this->left.drawStr(0,20,"UTCMON ver: ");
   this->left.drawStr(100,20,version.c_str());
@@ -101,28 +130,29 @@ void UI::drawInitScreenSensor(String version, bool leftDistanceSensor, bool left
   this->left.drawStr(0,60,"Light sensors: ");
   if (leftLightSensor) this->left.drawStr(130,60,"_OK_"); else this->left.drawStr(130,60,"FAIL"); 
   if (rightDistanceSensor) this->left.drawStr(180,60,"_OK_"); else this->left.drawStr(180,60,"FAIL"); 
-  this->left.sendBuffer();
+  this->sendBuffer(this->left);
 }
 void UI::drawInitScreenNetPhase1(String ssid){
   // TODO: support retry/wait count display
+  this->right.setFont(u8g2_font_profont17_mr);
   this->right.clearBuffer();
   this->right.drawStr(0,20,"SSID: ");
   this->right.drawStr(48,20,ssid.c_str());
   this->right.drawStr(0,40,"Wi-Fi connecting...");
-  this->right.sendBuffer();
+  this->sendBuffer(this->right);
 }
 void UI::drawInitScreenNetPhase2(){
   this->right.drawStr(0,40,"Wi-Fi connected       ");
   this->right.drawStr(0,60,"NTP initializing...");
-  this->right.sendBuffer();
+  this->sendBuffer(this->right);
 }
 void UI::drawInitScreenNetPhase3(){
   this->right.drawStr(0,60,"NTP initiliazing...");
-  this->right.sendBuffer();
+  this->sendBuffer(this->right);
 }
 void UI::drawInitScreenNetPhase4(){
   this->right.drawStr(0,60,"NTP synced              ");
-  this->right.sendBuffer();
+  this->sendBuffer(this->right);
 }
 
 void UI::setContrast(int contrast){

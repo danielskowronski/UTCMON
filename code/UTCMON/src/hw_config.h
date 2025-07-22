@@ -32,7 +32,7 @@ namespace LeftBus {
   };
   namespace Display {
     DisplayConfig config {
-      .Frequency = 15000000,
+      .Frequency = 3000000, //15000000,
       .CS = 5,
       .DC = 0,
       .RESET = 4
@@ -67,7 +67,7 @@ namespace RightBus {
   };
   namespace Display {
     DisplayConfig config {
-      .Frequency = 15000000,
+      .Frequency = 3000000, //15000000,
       .CS = 25,
       .DC = 26,
       .RESET = 27
@@ -79,6 +79,16 @@ namespace CommonBus {
     uint32_t Baudrate = 115200;
   };
   namespace SPI {
-    uint32_t Frequency = 15000000;
+    uint32_t Frequency = 3000000; //15000000;
+    int8_t MOSI = 23;
+    int8_t MISO = 19;
+    int8_t SCK = 18;
   };
+}
+
+namespace System {
+  namespace PeriodicDisplayReset {
+    uint64_t Period = 1*60*60; // 1h
+    uint64_t LastReset;
+  }
 }

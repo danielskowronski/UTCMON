@@ -1,30 +1,41 @@
 #include "DistanceSensors.h"
 
-DistanceSensors::DistanceSensors(DistanceSensorConfig leftConfig, DistanceSensorConfig rightConfig) {
+DistanceSensors::DistanceSensors(DistanceSensorConfig leftConfig, DistanceSensorConfig rightConfig, bool mockSensor) {
   this->leftConfig = leftConfig;
   this->rightConfig = rightConfig;
+  this->mockSensor = mockSensor;
 }
 DevicePairInitSuccess DistanceSensors::init() {
   DevicePairInitSuccess initSuccess;
-  initSuccess.left = this->left.begin(this->leftConfig.I2CAddress, this->leftConfig.DebugEnabled, &Wire);
-  initSuccess.right = this->right.begin(this->rightConfig.I2CAddress, this->rightConfig.DebugEnabled, &Wire1);
-
-  if (initSuccess.left){
-    this->left.configSensor(this->leftConfig.Mode);
+  if (this->mockSensor) {
+    initSuccess.left = true;
+    initSuccess.right = true;
   }
-  if (initSuccess.right){
-    this->right.configSensor(this->rightConfig.Mode);
+  else {
+    initSuccess.left = this->left.begin(this->leftConfig.I2CAddress, this->leftConfig.DebugEnabled, &Wire);
+    initSuccess.right = this->right.begin(this->rightConfig.I2CAddress, this->rightConfig.DebugEnabled, &Wire1);
+
+    if (initSuccess.left){
+      this->left.configSensor(this->leftConfig.Mode);
+    }
+    if (initSuccess.right){
+      this->right.configSensor(this->rightConfig.Mode);
+    }
   }
   return initSuccess;
 }
 int DistanceSensors::getDistance(Adafruit_VL53L0X &sensor, bool debugEnabled) {
-  
-  sensor.rangingTest(&(this->measure), debugEnabled);
-  if (measure.RangeStatus != 4) { // phase failures have incorrect data
-    return measure.RangeMilliMeter;
+  if (this->mockSensor) {
+    return 2137;
   }
   else {
-    return DISTANCE_ERROR;
+    sensor.rangingTest(&(this->measure), debugEnabled);
+    if (measure.RangeStatus != 4) { // phase failures have incorrect data
+      return measure.RangeMilliMeter;
+    }
+    else {
+      return DISTANCE_ERROR;
+    }
   }
 }
 int DistanceSensors::getLeft() {

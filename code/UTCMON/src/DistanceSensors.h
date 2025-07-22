@@ -24,9 +24,10 @@ private:
   DistanceSensorConfig rightConfig;
   int getDistance(Adafruit_VL53L0X &sensor, bool debugEnabled);
   VL53L0X_RangingMeasurementData_t measure;
+  bool mockSensor;
 
 public:
-DistanceSensors(DistanceSensorConfig leftConfig, DistanceSensorConfig rightConfig);
+  DistanceSensors(DistanceSensorConfig leftConfig, DistanceSensorConfig rightConfig, bool mockSensor=false);
   DevicePairInitSuccess init();
   int getLeft();
   int getRight();

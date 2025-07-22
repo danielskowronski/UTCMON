@@ -61,5 +61,7 @@ DateTimeStruct DateTime::getDateTimeStruct(){
   this->dt.second = this->zdt.second();
   this->dt.timezone = this->ze.abbrev();
 
+  this->dt.timestamp = this->now;
+
   return this->dt;
 }
