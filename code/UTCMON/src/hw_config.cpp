@@ -83,4 +83,15 @@ namespace System {
     const int ServerPort = 123;
     const int LocalPort = 2390; // arbitrary, should not conflict with other services
   }
+  namespace VirtualButtons {
+    const uint32_t TimeToActivateMs = 500;
+  }
+  namespace Network {
+    extern const int ConnCheckPeriodMs = 500;
+    extern const int ConnCheckCount = 60*(1000 / ConnCheckPeriodMs); // 1 minute
+  }
+  namespace Logging {
+    // WARN: ARDUHAL_LOG_LEVEL_INFO < ARDUHAL_LOG_LEVEL_DEBUG < ARDUHAL_LOG_LEVEL_VERBOSE
+    extern const uint8_t Level = ARDUHAL_LOG_LEVEL_VERBOSE; // ARDUHAL_LOG_LEVEL_INFO / ARDUHAL_LOG_LEVEL_DEBUG
+  }
 }

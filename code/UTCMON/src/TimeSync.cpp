@@ -1,5 +1,6 @@
 #include "TimeSync.h"
 #include "hw_config.h"
+#include "Logging.h"
 NtpDiagnostics ntpDiagnostics;
 WiFiUDP udp;
 
@@ -8,7 +9,7 @@ byte packetBuffer[NTP_PACKET_SIZE];
 
 void timeSyncNotificationCB(struct timeval *tv) {
   time(&(ntpDiagnostics.lastNtpSync));
-  Serial.println("NTP time synchronized");
+  logger.info(TAG_NTP_SYNC, "NTP sync notification received");
 }
 void configTimeExtended(long gmtOffset_sec, int daylightOffset_sec, const char* ntpServer) {
   sntp_setoperatingmode(SNTP_OPMODE_POLL);
@@ -36,7 +37,7 @@ time_t getNtpTime() {
   // see https://github.com/arduino-libraries/Ethernet/blob/master/examples/UdpNtpClient/UdpNtpClient.ino
   sendNtpPpacket(System::NTP::ServerHost);
 
-  int wait = 1000; // Max wait time in ms
+  int wait = 1000; // Max wait time in ms // TODO: make configurable
   int interval = 50;
   while (wait > 0) {
     delay(interval);
@@ -56,7 +57,7 @@ time_t getNtpTime() {
     wait -= interval;
   }
 
-  Serial.println("NTP request timed out");
+  logger.warn(TAG_NTP_SYNC, "NTP request timed out after %d ms", 1000 - wait);
   return 0;
 }
 void checkNTP() { 
@@ -79,16 +80,13 @@ void checkNTP() {
 
   ntpDiagnostics.lastDriftMs = drift_ms;
 
-  //ntpDiagnostics.syncStatus = sntp_get_sync_status();
-  //if (ntpDiagnostics.syncStatus == SNTP_SYNC_STATUS_COMPLETED) {
-  if (sntp_get_sync_status() == SNTP_SYNC_STATUS_COMPLETED) {
-    Serial.printf("Last NTP sync at: %s", ctime(&(ntpDiagnostics.lastNtpSync)));
-  } else {
-    Serial.println("NTP not yet synchronized.");
-  }
-  Serial.printf("System time: %s", ctime(&systemTime));
-  Serial.printf("NTP time:    %s", ctime(&ntpTime));
-  Serial.printf("Drift: %lld ms\n", drift_ms);
+  int ntp_status = sntp_get_sync_status();
+
+  logger.debug(TAG_NTP_DIAG,
+               "NTP status: %d, NTP time: %010lld, drift: %lld ms",
+               ntp_status,
+               static_cast<long long>(ntpTime),
+               static_cast<long long>(drift_ms));
 }
 
 int minutesSinceLastNtpSync() {

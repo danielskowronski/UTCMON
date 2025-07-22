@@ -1,4 +1,4 @@
-#define VERSION "v0.3.2"
+#define VERSION "v0.3.3"
 #ifndef BUILD_DATE
   #define BUILD_DATE "YYYY-MM-DD"
 #endif
@@ -20,11 +20,12 @@
 #include <Wire.h>
 #include "TimeSync.h"
 
+#include "Logging.h"
 
 void checkNtpDriftIfNeeded() {
   time_t now = time(nullptr);
   if (now - ntpDiagnostics.lastDriftCheck >= System::NTP::CheckPeriodS) {
-    Serial.printf("Checking NTP drift at %10d (last: %10d, period: %d)\n", now, ntpDiagnostics.lastDriftCheck, System::NTP::CheckPeriodS);
+    // no extra logging, checkNTP handles that
     checkNTP();
     // ntpDiagnostics.lastDriftCheck is set in checkNTP()
   }
@@ -39,36 +40,34 @@ DistanceSensors distance(LeftBus::DistanceSensor::config, RightBus::DistanceSens
 void WiFiConnect(){
   while (true) {
     WiFi.begin(WIFI_SSID, WIFI_PASS);
+    logger.info(TAG_NET, "Starting WiFi connection attempt to %s", WIFI_SSID);
     ui.drawInitScreenNetPhase1(WIFI_SSID);
 
     int count=0;
     while (WiFi.status() != WL_CONNECTED) {
-      Serial.println("Connecting ...");
-      delay(500);
+      logger.debug(TAG_NET, "Waiting for WiFi to connect - attempt %4d/%d", count, System::Network::ConnCheckCount);
+      delay(System::Network::ConnCheckPeriodMs);
       count++;
-      if (count > 120) {
-        Serial.println("Failed to connect to WiFi, breaking...");
+      if (count > System::Network::ConnCheckCount) {
+        //logger.warn(TAG_NET, "Failed to connect to WiFi");
         break;
       }
     }
     if (WiFi.status() != WL_CONNECTED) {
-      Serial.println("Failed to connect to WiFi, retrying...");
+      logger.warn(TAG_NET, "Failed to connect to WiFi");
       continue;
     }
-    Serial.printf(WiFi.localIP().toString().c_str());
-    Serial.printf("\n");
-    
+    logger.info(TAG_NET, "WiFi connected, obtained IP address: %s", WiFi.localIP().toString().c_str());
+
     ui.drawInitScreenNetPhase2(WiFi.localIP().toString());
 
 
-    Serial.println("Connected");
-    //configTime(0, 0, "pool.ntp.org");
+    logger.info(TAG_NET, "Starting initial NTP sync to: %s", System::NTP::ServerHost);
     configTimeExtended(0, 0, System::NTP::ServerHost);
     struct tm timeinfo;
     ui.drawInitScreenNetPhase3();
     while (!getLocalTime(&timeinfo)) {
-
-      Serial.println("Waiting for time sync...");
+      logger.debug(TAG_NET, "Waiting for initial NTP to finish");
       delay(1000);
     }
     checkNTP();
@@ -78,15 +77,17 @@ void WiFiConnect(){
 }
 
 void WiFiStationDisconnected(WiFiEvent_t event, WiFiEventInfo_t info){
-  Serial.println("Disconnected from WiFi access point");
-  Serial.print("WiFi lost connection. Reason: ");
-  Serial.println(info.wifi_sta_disconnected.reason);
-  Serial.println("Trying to Reconnect");
+  logger.warn(TAG_NET, "WiFi disconnected with event %d and reason", event, info.wifi_sta_disconnected.reason);
   WiFiConnect();
 }
-
 void setup() {
   Serial.begin(CommonBus::Serial::Baudrate);
+  while(!Serial); logger.forwardTo(&Serial);
+  logger.setLevel(System::Logging::Level); 
+  Mycila::Logger::setTimeProvider([]() -> uint32_t {
+    return time(nullptr);
+  });
+
   SPI.begin(CommonBus::SPI::SCK, CommonBus::SPI::MISO, CommonBus::SPI::MOSI);
   SPI.setFrequency(CommonBus::SPI::Frequency);
   // TODO: Wire+Wire1 vs custom TwoWire instances; per-class vs global
@@ -124,13 +125,19 @@ uint64_t lastDisplayReset = 0;
 void periodicDisplayReset() {
   time_t now = time(nullptr);
   if (now - lastDisplayReset > System::PeriodicDisplayReset::Period) {
-    Serial.printf("Periodic display reset at %10d (last: %10d, period: %d)\n", now, lastDisplayReset, System::PeriodicDisplayReset::Period);
+    logger.debug(TAG_DISP_RST, "Periodic display reset (last: %10d, period: %d)", lastDisplayReset, System::PeriodicDisplayReset::Period);
     lastDisplayReset = now;
     ui.resetScreens();
     //ui.init();
   }
 }
 
+String fmtDist(int mm) {
+  if (mm > 8000) return "-----";
+  char buffer[8];
+  sprintf(buffer, "%3d.%d", mm / 10, mm % 10);
+  return String(buffer);
+}
 
 // TODO: split to threads - one for clock, one for sensors
 void loop() {
@@ -145,12 +152,14 @@ void loop() {
   mm_l = distance.getLeft();
   mm_r = distance.getRight();
 
+
   lux_l = light.getLeft();
   lux_r = light.getRight();
   avg_lux = light.getAvg();
 
   if (avg_lux>512) contrast=255; else contrast=int(avg_lux/2); // TODO: move contrast calc to some better place + parametrize values
-  //Serial.printf("lux: L=%05d R=%05d AVG=%05d => contrast=%03d\n", lux_l, lux_r, avg_lux, contrast);
+  logger.verbose(TAG_SENSORS, "distL=%s distR=%s | luxL=%5d luxR=%5d cont=%3d", fmtDist(mm_l), fmtDist(mm_r), lux_l, lux_r, contrast);
+
   ui.setContrast(contrast);
 
   ui.drawClock(dts, mm_l, mm_r, lux_l, lux_r);

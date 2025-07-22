@@ -66,4 +66,14 @@ namespace System {
     extern const int ServerPort;
     extern const int LocalPort;
   }
+  namespace VirtualButtons {
+    extern const uint32_t TimeToActivateMs;
+  }
+  namespace Network {
+    extern const int ConnCheckPeriodMs;
+    extern const int ConnCheckCount;
+  }
+  namespace Logging {
+    extern const uint8_t Level;
+  }
 }

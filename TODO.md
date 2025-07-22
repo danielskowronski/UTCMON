@@ -38,9 +38,10 @@ internal reference: `DSx2500A`
 - [x] controllable NTP sync
 - [x] NTP drift detection
 - [ ] move TimeSync contents to some class
-- [ ] standardize debug messages on console
+- [x] standardize debug messages on console
 - [ ] improve code as of 2025-W30 (remove warnings, duplicates)
-- [ ] better brightness control (without flicker)
+- [ ] improve UI render formatting
+- [-] better brightness control (without flicker) -> can't be done better
 - [ ] timezone change UI - virtual buttons
 - [ ] brightness control UI - virtual buttons
 - [ ] watchdog for abnormal NTP sync -> reboot
