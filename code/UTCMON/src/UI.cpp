@@ -1,6 +1,7 @@
 #include "UI.h"
 #include "common.h"
 #include <U8g2lib.h>
+#include "TimeSync.h"
 
 UI::UI(DisplayConfig leftConfig, DisplayConfig rightConfig){
   this->leftConfig = leftConfig;
@@ -44,36 +45,58 @@ void UI::resetScreens(){
   this->resetOneScreen(this->left);
   this->resetOneScreen(this->right);
 }
+void UI::setDateDisplayMode(DateDisplayMode mode) {
+  this->dateDisplayMode = mode;
+}
 void UI::drawClock(DateTimeStruct dt, int mm_l, int mm_r, int lux_l, int lux_r){
   char buffer[256];
 
   this->left.clearBuffer();
 
-  // Left screen, bottom line, large: YYYY-MM-DD
-  sprintf(buffer, "%04d-%02d-%02d", dt.year, dt.month, dt.day);
-  this->left.setFont(u8g2_font_logisoso38_tn);
-  this->left.drawStr(0,64,buffer);
+  switch (this->dateDisplayMode){
+    case FullOnlyDate:
+    case FullAndNTP:
+    case FullAndSensors:
+      // Left screen, bottom line, large: YYYY-MM-DD
+      sprintf(buffer, "%04d-%02d-%02d", dt.year, dt.month, dt.day);
+      this->left.setFont(u8g2_font_logisoso38_tn);
+      this->left.drawStr(0,64,buffer);
 
-  // Left screen, top line, small: ISO week - Weekeday
-  sprintf(buffer, "W%02d %.16s", dt.week, dt.weekday);
-  this->left.setFont(u8g2_font_logisoso16_tr);
-  this->left.drawStr(0,20,buffer);
+      // Left screen, top line, small: ISO week - Weekeday
+      sprintf(buffer, "W%02d %.16s", dt.week, dt.weekday);
+      this->left.setFont(u8g2_font_logisoso16_tr);
+      this->left.drawStr(0,20,buffer);
+      break;
+  }
 
-  // Left screen, top line, small: distance
-  if (mm_l<=2500) sprintf(buffer, "% 4d.%d cm", int(mm_l/10), mm_l%10); else sprintf(buffer, " >>>>> cm");
-  this->left.setFont(u8g2_font_t0_12_tr);
-  this->left.drawStr(140,10,buffer);
-  sprintf(buffer, "% 6d lx", lux_l);
-  this->left.setFont(u8g2_font_t0_12_tr);
-  this->left.drawStr(140,20,buffer);
+  switch (this->dateDisplayMode){
+    case FullAndSensors:
+        // Left screen, top line, small: distance
+        if (mm_l<=2500) sprintf(buffer, "% 4d.%d cm", int(mm_l/10), mm_l%10); else sprintf(buffer, " >>>>> cm");
+        this->left.setFont(u8g2_font_t0_12_tr);
+        this->left.drawStr(140,10,buffer);
+        sprintf(buffer, "% 6d lx", lux_l);
+        this->left.setFont(u8g2_font_t0_12_tr);
+        this->left.drawStr(140,20,buffer);
 
-
-  if (mm_r<=2500) sprintf(buffer, "% 4d.%d cm", int(mm_r/10), mm_r%10); else sprintf(buffer, " >>>>> cm");
-  this->left.setFont(u8g2_font_t0_12_tr);
-  this->left.drawStr(200,10,buffer);
-  sprintf(buffer, "% 6d lx", lux_r);
-  this->left.setFont(u8g2_font_t0_12_tr);
-  this->left.drawStr(200,20,buffer);
+        if (mm_r<=2500) sprintf(buffer, "% 4d.%d cm", int(mm_r/10), mm_r%10); else sprintf(buffer, " >>>>> cm");
+        this->left.setFont(u8g2_font_t0_12_tr);
+        this->left.drawStr(200,10,buffer);
+        sprintf(buffer, "% 6d lx", lux_r);
+        this->left.setFont(u8g2_font_t0_12_tr);
+        this->left.drawStr(200,20,buffer);
+      break;
+    case FullAndNTP:
+      this->left.setFont(u8g2_font_t0_12_tr);
+      sprintf(buffer, "drift:     %4dms", ntpDiagnostics.lastDriftMs);
+      this->left.drawStr(150,10,buffer);
+      sprintf(buffer, "sync: %3d min ago", minutesSinceLastNtpSync());
+      this->left.drawStr(150,20,buffer);
+      break;
+    default:
+      // No additional info
+      break;
+  }
 
   this->sendBuffer(this->left);
 
@@ -134,24 +157,28 @@ void UI::drawInitScreenSensor(String version, bool leftDistanceSensor, bool left
 }
 void UI::drawInitScreenNetPhase1(String ssid){
   // TODO: support retry/wait count display
+  char buffer[64];
+  sprintf(buffer, "SSID: %s", ssid.c_str());
   this->right.setFont(u8g2_font_profont17_mr);
   this->right.clearBuffer();
-  this->right.drawStr(0,20,"SSID: ");
-  this->right.drawStr(48,20,ssid.c_str());
-  this->right.drawStr(0,40,"Wi-Fi connecting...");
+  this->right.drawStr(0,20,buffer);
+  this->right.drawStr(0,40,"WiFi: connecting...");
   this->sendBuffer(this->right);
 }
-void UI::drawInitScreenNetPhase2(){
-  this->right.drawStr(0,40,"Wi-Fi connected       ");
-  this->right.drawStr(0,60,"NTP initializing...");
+void UI::drawInitScreenNetPhase2(String ipAddress){
+  char buffer[64];
+  sprintf(buffer, "WiFi: %s", ipAddress.c_str());
+  this->right.drawStr(0,40,buffer);
   this->sendBuffer(this->right);
 }
 void UI::drawInitScreenNetPhase3(){
-  this->right.drawStr(0,60,"NTP initiliazing...");
+  this->right.drawStr(0,60," NTP: initiliazing...");
   this->sendBuffer(this->right);
 }
-void UI::drawInitScreenNetPhase4(){
-  this->right.drawStr(0,60,"NTP synced              ");
+void UI::drawInitScreenNetPhase4(int driftMs){
+  char buffer[64];
+  sprintf(buffer, " NTP: synced, drift %d ms", driftMs);
+  this->right.drawStr(0,60,buffer);
   this->sendBuffer(this->right);
 }
 

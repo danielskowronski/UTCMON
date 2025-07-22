@@ -1,4 +1,4 @@
-#define VERSION "v0.3.0"
+#define VERSION "v0.3.2"
 #ifndef BUILD_DATE
   #define BUILD_DATE "YYYY-MM-DD"
 #endif
@@ -18,7 +18,17 @@
 #include <time.h>
 
 #include <Wire.h>
+#include "TimeSync.h"
 
+
+void checkNtpDriftIfNeeded() {
+  time_t now = time(nullptr);
+  if (now - ntpDiagnostics.lastDriftCheck >= System::NTP::CheckPeriodS) {
+    Serial.printf("Checking NTP drift at %10d (last: %10d, period: %d)\n", now, ntpDiagnostics.lastDriftCheck, System::NTP::CheckPeriodS);
+    checkNTP();
+    // ntpDiagnostics.lastDriftCheck is set in checkNTP()
+  }
+}
 
 DateTime dt;
 UI ui(LeftBus::Display::config, RightBus::Display::config);
@@ -48,11 +58,12 @@ void WiFiConnect(){
     Serial.printf(WiFi.localIP().toString().c_str());
     Serial.printf("\n");
     
-    ui.drawInitScreenNetPhase2();
+    ui.drawInitScreenNetPhase2(WiFi.localIP().toString());
 
 
     Serial.println("Connected");
-    configTime(0, 0, "pool.ntp.org");
+    //configTime(0, 0, "pool.ntp.org");
+    configTimeExtended(0, 0, System::NTP::ServerHost);
     struct tm timeinfo;
     ui.drawInitScreenNetPhase3();
     while (!getLocalTime(&timeinfo)) {
@@ -60,7 +71,8 @@ void WiFiConnect(){
       Serial.println("Waiting for time sync...");
       delay(1000);
     }
-    ui.drawInitScreenNetPhase4();
+    checkNTP();
+    ui.drawInitScreenNetPhase4(ntpDiagnostics.lastDriftMs);
     break;
   } 
 }
@@ -75,7 +87,6 @@ void WiFiStationDisconnected(WiFiEvent_t event, WiFiEventInfo_t info){
 
 void setup() {
   Serial.begin(CommonBus::Serial::Baudrate);
-  //WiFi.begin(WIFI_SSID, WIFI_PASS);
   SPI.begin(CommonBus::SPI::SCK, CommonBus::SPI::MISO, CommonBus::SPI::MOSI);
   SPI.setFrequency(CommonBus::SPI::Frequency);
   // TODO: Wire+Wire1 vs custom TwoWire instances; per-class vs global
@@ -97,10 +108,9 @@ void setup() {
   delay(2000);
   
   dt=DateTime("Europe/Warsaw");
+  ui.setDateDisplayMode(DateDisplayMode::FullAndNTP);
 }
 
-// TODO: NTP time drift detection
-// TODO: regular reboots
 
 int avg_lux;
 int contrast=255;
@@ -109,11 +119,13 @@ int lux_r; // only for debug phase
 int mm_l; 
 int mm_r;
 DateTimeStruct dts;
+uint64_t lastDisplayReset = 0;
 
-void periodicDisplayReset(DateTimeStruct dts) {
-  if (dts.timestamp - System::PeriodicDisplayReset::LastReset > System::PeriodicDisplayReset::Period) {
-    Serial.printf("Periodic display reset at %10d (last: %10d, period: %d)\n", dts.timestamp, System::PeriodicDisplayReset::LastReset, System::PeriodicDisplayReset::Period);
-    System::PeriodicDisplayReset::LastReset = dts.timestamp;
+void periodicDisplayReset() {
+  time_t now = time(nullptr);
+  if (now - lastDisplayReset > System::PeriodicDisplayReset::Period) {
+    Serial.printf("Periodic display reset at %10d (last: %10d, period: %d)\n", now, lastDisplayReset, System::PeriodicDisplayReset::Period);
+    lastDisplayReset = now;
     ui.resetScreens();
     //ui.init();
   }
@@ -122,12 +134,13 @@ void periodicDisplayReset(DateTimeStruct dts) {
 
 // TODO: split to threads - one for clock, one for sensors
 void loop() {
+  if (WiFi.status() != WL_CONNECTED)  WiFiConnect();
+
   dts=dt.getDateTimeStruct();
 
-  periodicDisplayReset(dts);
-  if (WiFi.status() != WL_CONNECTED) {
-    WiFiConnect();
-  }
+  periodicDisplayReset();
+  checkNtpDriftIfNeeded();
+
 
   mm_l = distance.getLeft();
   mm_r = distance.getRight();

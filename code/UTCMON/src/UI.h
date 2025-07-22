@@ -17,10 +17,16 @@ struct DisplayConfig {
   uint8_t RESET;
 };
 
+enum DateDisplayMode {
+  FullOnlyDate,
+  FullAndSensors,
+  FullAndNTP
+};
 
 class UI
 {
 private:
+  DateDisplayMode dateDisplayMode = FullOnlyDate;
   U8G2 left;
   U8G2 right;
   DisplayConfig leftConfig;
@@ -34,9 +40,10 @@ public:
   void drawSplashScreen(String version);
   void drawInitScreenSensor(String version, bool leftDistanceSensor, bool leftLightSensor, bool rightDistanceSensor, bool rightLightSensor);
   void drawInitScreenNetPhase1(String ssid);
-  void drawInitScreenNetPhase2();
+  void drawInitScreenNetPhase2(String ipAddress);
   void drawInitScreenNetPhase3();
-  void drawInitScreenNetPhase4();
+  void drawInitScreenNetPhase4(int driftMs);
+  void setDateDisplayMode(DateDisplayMode mode);
   void drawClock(DateTimeStruct dt, int mm_l, int mm_r, int lux_l, int lux_r);
   void setContrast(int contrast);
 };
