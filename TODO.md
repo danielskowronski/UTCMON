@@ -31,6 +31,7 @@ internal reference: `DSx2500A`
   - [x] periodic screen redraw
   - [x] frequency and setup
   - [.] workaround for SPI transmission broken due to other cores triggering inetrrupts
+  - [.] further SPI issue diagnostics
   - [ ] fix SPI transmission in u8g2  https://github.com/olikraus/u8g2/issues/2682
 
 ## current work
@@ -43,15 +44,18 @@ internal reference: `DSx2500A`
 - [ ] move TimeSync contents to some class
 - [x] standardize debug messages on console
 - [ ] improve code as of 2025-W30 (remove warnings, duplicates)
-- [ ] improve UI render formatting
+- [.] improve UI render formatting
 - [ ] cover all places where we could check init status, attempt checking display update status 
 - [-] better brightness control (without flicker) -> can't be done better
+- [x] distance sensor - wrap in structs, fix logging and formatting
+- [ ] light sensor - wrap in structs, fix logging and formatting
 - [ ] timezone change UI - virtual buttons
 - [ ] brightness control UI - virtual buttons
 - [ ] watchdog for abnormal NTP sync -> reboot
 
 ## future work
 
+- [ ] add logging to loki or similar system
 - [ ] multithread operations??
 - [ ] runtime control via WebAPI (timezone, timezones, display mode, brightness, schedules...)
 - [ ] sensor status push via MQTT

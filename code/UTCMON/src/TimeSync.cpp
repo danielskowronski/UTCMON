@@ -83,10 +83,11 @@ void checkNTP() {
   int ntp_status = sntp_get_sync_status();
 
   logger.debug(TAG_NTP_DIAG,
-               "NTP status: %d, NTP time: %010lu, drift: %ld ms",
+               "NTP status: %d, NTP time: %010lu, drift: % 4ld ms, uptime: % 10lu ms",
                ntp_status,
                static_cast<unsigned long>(ntpTime),
-               static_cast<long>(drift_ms));
+               static_cast<long>(drift_ms),
+               millis());
 }
 
 int minutesSinceLastNtpSync() {

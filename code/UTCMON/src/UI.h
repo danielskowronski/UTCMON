@@ -11,6 +11,9 @@
 #include "common.h"
 #include "DistanceSensors.h"
 
+#define DISPLAY_SENDBUFFER_DURATION_WARN_US 8000
+#define DISPLAY_SENDBUFFER_JITTER_WARN_US   1000
+
 struct DisplayConfig {
   uint32_t Frequency;
   uint8_t CS;

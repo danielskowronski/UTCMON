@@ -1,4 +1,4 @@
-#define VERSION "v0.3.5"
+#define VERSION "v0.3.6"
 #ifndef BUILD_DATE
   #define BUILD_DATE "YYYY-MM-DD"
 #endif
@@ -45,7 +45,7 @@ void WiFiConnect(){
 
     int count=0;
     while (WiFi.status() != WL_CONNECTED) {
-      logger.debug(TAG_NET, "Waiting for WiFi to connect - attempt %4d/%d", count, System::Network::ConnCheckCount);
+      logger.verbose(TAG_NET, "Waiting for WiFi to connect - attempt %4d/%d", count, System::Network::ConnCheckCount);
       delay(System::Network::ConnCheckPeriodMs);
       count++;
       if (count > System::Network::ConnCheckCount) {
@@ -149,7 +149,6 @@ void setup() {
 
 
   delay(2000);
-
   xTaskCreatePinnedToCore(
     displayTask,           // function
     "Display",             // name
@@ -157,7 +156,7 @@ void setup() {
     NULL,                  // parameters
     configMAX_PRIORITIES-1,// priority
     NULL,                  // task handle
-    0                      // run on core 1 // 0 = one with wifi // <--- this is latest change + noInterrupts
+    1                      // run on core 1 // 0 = one with wifi
   );
 
   dt=DateTime("Europe/Warsaw");

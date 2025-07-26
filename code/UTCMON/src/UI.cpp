@@ -9,9 +9,9 @@ UI::UI(DisplayConfig leftConfig, DisplayConfig rightConfig){
   this->rightConfig = rightConfig;
 }
 void UI::sendBuffer(U8G2 &screen) {
-  noInterrupts();
+  //noInterrupts();
   screen.sendBuffer();
-  interrupts();
+  //interrupts();
 }
 DevicePairInitSuccess UI::init(){
   DevicePairInitSuccess initSuccess;
@@ -51,6 +51,7 @@ void UI::setDateDisplayMode(DateDisplayMode mode) {
 }
 void UI::drawClock(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l, int lux_r){
   char buffer[256];
+  uint32_t beforeFirst, afterFirst, beforeSecond, afterSecond, deltaFirst, deltaSecond, jitter;
 
   this->left.clearBuffer();
 
@@ -97,7 +98,9 @@ void UI::drawClock(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l, int lux
       break;
   }
 
+  beforeFirst = micros();
   this->sendBuffer(this->left);
+  afterFirst = micros();
 
   //while (digitalRead(this->rightConfig.CS) == LOW) {
   //  logger.warn(TAG_DISPLAYS, "drawClock: waiting for Right CS to be released");
@@ -121,7 +124,17 @@ void UI::drawClock(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l, int lux
   this->right.setFont(u8g2_font_logisoso16_tr);
   this->right.drawStr(5*36+26+5*(strlen(dt.timezone.c_str())%2),16,buffer);
 
+  beforeSecond = micros();
   this->sendBuffer(this->right);
+  afterSecond = micros();
+
+  deltaFirst = afterFirst - beforeFirst;
+  deltaSecond = afterSecond - beforeSecond;
+  jitter = abs((int)deltaFirst-(int)deltaSecond);
+
+  // if any of displays take more than DISPLAY_SENDBUFFER_DURATION_WARN_US to update or if the jitter is more than DISPLAY_SENDBUFFER_JITTER_WARN_US then log a warning, else log as verbose-debug
+  int logLevel = (deltaFirst > DISPLAY_SENDBUFFER_DURATION_WARN_US || deltaSecond > DISPLAY_SENDBUFFER_DURATION_WARN_US || jitter > DISPLAY_SENDBUFFER_JITTER_WARN_US) ? ARDUHAL_LOG_LEVEL_WARN : ARDUHAL_LOG_LEVEL_VERBOSE;
+  logger.log(logLevel, TAG_DISPLAYS, "drawClock: left sendBuffer took %8ld us, right sendBuffer took %8ld us, jitter was %8ld us", deltaFirst, deltaSecond, jitter);
 }
 void UI::drawSplashScreen(String version){
   this->left.clearBuffer();
