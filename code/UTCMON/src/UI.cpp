@@ -1,8 +1,9 @@
 #include "UI.h"
 #include "common.h"
-#include <U8g2lib.h>
 #include "TimeSync.h"
 #include "Logging.h"
+#include "WiFi.h"
+#include <U8g2lib.h>
 
 UI::UI(DisplayConfig leftConfig, DisplayConfig rightConfig){
   this->leftConfig = leftConfig;
@@ -61,37 +62,44 @@ void UI::drawClock(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l, int lux
     case FullAndSensors:
       // Left screen, bottom line, large: YYYY-MM-DD
       sprintf(buffer, "%04d-%02d-%02d", dt.year, dt.month, dt.day);
-      this->left.setFont(u8g2_font_logisoso38_tn);
-      this->left.drawStr(0,64,buffer);
+      this->left.setFont(UIL_DAT_FF);
+      this->left.drawStr(UIL_DAT_X,UIL_DAT_Y,buffer);
+      // Left screen, top line, small: status icon ()
+      uint16_t icon = (WiFi.status() != WL_CONNECTED) ? UIL_ICN_GLYPH_OFFLINE : UIL_ICN_GLYPH_ONLINE;
+      this->left.setFont(UIL_ICN_FF);
+      this->left.drawGlyph(UIL_ICN_X,UIL_ICN_Y,icon);
 
       // Left screen, top line, small: ISO week - Weekeday
-      sprintf(buffer, "W%02d %.16s", dt.week, dt.weekday);
-      this->left.setFont(u8g2_font_logisoso16_tr);
-      this->left.drawStr(0,20,buffer);
+      sprintf(buffer, "W%02d %.16s", dt.week, dt.weekday); // "Wednesday"
+      this->left.setFont(UIL_TOP_FF);
+      this->left.drawStr(UIL_TOP_X,UIL_TOP_Y,buffer);
+
       break;
   }
 
   switch (this->dateDisplayMode){
     case FullAndSensors:
         // Left screen, top line, small: distance
-        this->left.setFont(u8g2_font_t0_12_tr);
-        this->left.drawStr(140,10,DistanceSensors::fmtDist(dsp.left, true, true).c_str());
-        sprintf(buffer, "% 5dlux", lux_l);
-        this->left.setFont(u8g2_font_t0_12_tr);
-        this->left.drawStr(140,20,buffer);
+        this->left.setFont(UIL_INF_FF);
+        this->left.drawStr(UIL_SEN_X1,UIL_INF_FH,DistanceSensors::fmtDist(dsp.left, true, true, true).c_str());
+        sprintf(buffer, "%05dlx", lux_l);
+        this->left.setFont(UIL_INF_FF);
+        this->left.drawStr(UIL_SEN_X1,UIL_INF_FH*2,buffer);
 
-        this->left.setFont(u8g2_font_t0_12_tr);
-        this->left.drawStr(200,10,DistanceSensors::fmtDist(dsp.right, true, true).c_str());
-        sprintf(buffer, "% 5dlux", lux_r);
-        this->left.setFont(u8g2_font_t0_12_tr);
-        this->left.drawStr(200,20,buffer);
+        this->left.drawBox(UIL_SEN_X2-UIL_SEN_COL_PADDING, UIL_SEN_Y0, UIL_SEN_COL_MARGIN, UIL_SEN_H);
+
+        this->left.setFont(UIL_INF_FF);
+        this->left.drawStr(UIL_SEN_X2,UIL_INF_FH,DistanceSensors::fmtDist(dsp.right, true, true, true).c_str());
+        sprintf(buffer, "%05dlx", lux_r);
+        this->left.setFont(UIL_INF_FF);
+        this->left.drawStr(UIL_SEN_X2,UIL_INF_FH*2,buffer);
       break;
     case FullAndNTP:
-      this->left.setFont(u8g2_font_t0_12_tr);
-      sprintf(buffer, "drift:     %4dms", ntpDiagnostics.lastDriftMs);
-      this->left.drawStr(150,10,buffer);
-      sprintf(buffer, "sync: %3d min ago", minutesSinceLastNtpSync());
-      this->left.drawStr(150,20,buffer);
+      this->left.setFont(UIL_INF_FF);
+      sprintf(buffer, "drift % 4dms", ntpDiagnostics.lastDriftMs);
+      this->left.drawStr(UIL_NTP_X,UIL_INF_FH,buffer);
+      sprintf(buffer, "sync % 3dm ago", minutesSinceLastNtpSync());
+      this->left.drawStr(UIL_NTP_X,UIL_INF_FH*2,buffer);
       break;
     default:
       // No additional info

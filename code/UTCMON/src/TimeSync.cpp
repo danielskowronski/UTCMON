@@ -12,6 +12,8 @@ void timeSyncNotificationCB(struct timeval *tv) {
   logger.info(TAG_NTP_SYNC, "NTP sync notification received");
 }
 void configTimeExtended(long gmtOffset_sec, int daylightOffset_sec, const char* ntpServer) {
+  esp_sntp_stop(); // fix `assert failed: sntp_setoperatingmode /IDF/components/lwip/lwip/src/apps/sntp/sntp.c:748 (Operating mode must not be set while SNTP client is running)`
+  
   sntp_setoperatingmode(SNTP_OPMODE_POLL);
   sntp_setservername(0, (char*)ntpServer); 
   sntp_set_time_sync_notification_cb(timeSyncNotificationCB);

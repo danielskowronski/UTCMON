@@ -46,19 +46,24 @@ int DistanceSensors::getLeft() {
 int DistanceSensors::getRight() {
   return getDistance(this->right, this->rightConfig.DebugEnabled);
 }
-String DistanceSensors::fmtDist(DistanceStatus ds, bool showUnit, bool showTriggering) {
-  String unit = showUnit ? "cm" : "";
+String DistanceSensors::fmtDist(DistanceStatus ds, bool preferMM, bool showUnit, bool showTriggering) {
+  String unit = showUnit ? (preferMM ? "mm" : "cm") : "";
   String triggerMark = showTriggering ? (ds.triggering ? "!" : ".") : "";
 
   if (ds.mm > DISTANCE_MAX || ds.mm == DISTANCE_ERROR) {
-    String ret = "_____";
-    if (ds.mm == DISTANCE_ERROR) ret = "-----";
+    String ret = preferMM ? "____" : "_____";
+    if (ds.mm == DISTANCE_ERROR) ret = preferMM ? "----" : "-----";
     
     return ret+unit+triggerMark;
   }
 
   char buffer[11];
-  sprintf(buffer, "%3d.%d%s%s", ds.mm / 10, ds.mm % 10, unit.c_str(), triggerMark.c_str());
+  if (preferMM) {
+    sprintf(buffer, "%4d%s%s", ds.mm, unit.c_str(), triggerMark.c_str());
+  }
+  else {
+    sprintf(buffer, "%3d.%d%s%s", ds.mm / 10, ds.mm % 10, unit.c_str(), triggerMark.c_str());
+  }
   return String(buffer);
 }
 DistanceStatusPair DistanceSensors::getSensorsStatus(){
@@ -68,7 +73,7 @@ DistanceStatusPair DistanceSensors::getSensorsStatus(){
   status.left.triggering = (status.left.mm < LeftBus::DistanceSensor::TriggeringThreshold);
   status.right.triggering = (status.right.mm < RightBus::DistanceSensor::TriggeringThreshold);
 
-  logger.verbose(TAG_DIST, "L=%s R=%s", this->fmtDist(status.left, true, true), this->fmtDist(status.right, true, true));
+  logger.verbose(TAG_DIST, "L=%s R=%s", this->fmtDist(status.left, false, true, true), this->fmtDist(status.right, false, true, true));
 
   return status;
 }

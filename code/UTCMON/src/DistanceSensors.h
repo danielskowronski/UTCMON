@@ -41,5 +41,5 @@ public:
   int getLeft();
   int getRight();
   DistanceStatusPair getSensorsStatus();
-  static String fmtDist(DistanceStatus ds, bool showUnit = false, bool showTriggering = false);
+  static String fmtDist(DistanceStatus ds, bool preferMM = false, bool showUnit = false, bool showTriggering = false);
 };

@@ -1,4 +1,4 @@
-#define VERSION "v0.3.6"
+#define VERSION "v0.3.7"
 #ifndef BUILD_DATE
   #define BUILD_DATE "YYYY-MM-DD"
 #endif
@@ -36,12 +36,14 @@ UI ui(LeftBus::Display::config, RightBus::Display::config);
 LightSensors light(LeftBus::LightSensor::config, RightBus::LightSensor::config);
 DistanceSensors distance(LeftBus::DistanceSensor::config, RightBus::DistanceSensor::config, false);
 
+//portMUX_TYPE displayMux = portMUX_INITIALIZER_UNLOCKED; // TODO: maybe that should be in UI class? portENTER_CRITICAL(&displayMux); portEXIT_CRITICAL(&displayMux);
 
-void WiFiConnect(){
+
+void WiFiConnect(bool updateDisplay = false){
   while (true) {
     WiFi.begin(WIFI_SSID, WIFI_PASS);
     logger.info(TAG_NET, "Starting WiFi connection attempt to %s", WIFI_SSID);
-    ui.drawInitScreenNetPhase1(WIFI_SSID);
+    if (updateDisplay) ui.drawInitScreenNetPhase1(WIFI_SSID);
 
     int count=0;
     while (WiFi.status() != WL_CONNECTED) {
@@ -59,19 +61,19 @@ void WiFiConnect(){
     }
     logger.info(TAG_NET, "WiFi connected, obtained IP address: %s", WiFi.localIP().toString().c_str());
 
-    ui.drawInitScreenNetPhase2(WiFi.localIP().toString());
+    if (updateDisplay) ui.drawInitScreenNetPhase2(WiFi.localIP().toString());
 
 
     logger.info(TAG_NET, "Starting initial NTP sync to: %s", System::NTP::ServerHost);
     configTimeExtended(0, 0, System::NTP::ServerHost);
     struct tm timeinfo;
-    ui.drawInitScreenNetPhase3();
+    if (updateDisplay) ui.drawInitScreenNetPhase3();
     while (!getLocalTime(&timeinfo)) {
       logger.debug(TAG_NET, "Waiting for initial NTP to finish");
       delay(1000);
     }
     checkNTP();
-    ui.drawInitScreenNetPhase4(ntpDiagnostics.lastDriftMs);
+    if (updateDisplay) ui.drawInitScreenNetPhase4(ntpDiagnostics.lastDriftMs);
     break;
   } 
 }
@@ -144,7 +146,7 @@ void setup() {
 
   ui.drawInitScreenSensor(VER_INFO, distanceInitSuccess.left, lightInitSuccess.left, distanceInitSuccess.right, lightInitSuccess.right);
 
-  WiFiConnect();
+  WiFiConnect(true);
   //WiFi.onEvent(WiFiStationDisconnected, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
 
 
@@ -161,5 +163,5 @@ void setup() {
 
   dt=DateTime("Europe/Warsaw");
   ui.setDateDisplayMode(DateDisplayMode::FullAndNTP);
-  ui.setDateDisplayMode(DateDisplayMode::FullAndSensors);
+  //ui.setDateDisplayMode(DateDisplayMode::FullAndSensors);
 }

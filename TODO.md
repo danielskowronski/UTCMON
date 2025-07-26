@@ -40,7 +40,10 @@ internal reference: `DSx2500A`
 
 - [x] controllable NTP sync
 - [x] NTP drift detection
-- [ ] WiFi reconnect after ESP_ERR_WIFI_CONN reinits NTP client, which fails assertion `assert failed: sntp_setoperatingmode /IDF/components/lwip/lwip/src/apps/sntp/sntp.c:748 (Operating mode must not be set while SNTP client is running)` and crashes device
+- [x] WiFi reconnect after ESP_ERR_WIFI_CONN reinits NTP client, which fails assertion `assert failed: sntp_setoperatingmode /IDF/components/lwip/lwip/src/apps/sntp/sntp.c:748 (Operating mode must not be set while SNTP client is running)` and crashes device
+- [x] add icon to indicate wifi connection is lost
+- [.] drawClock - all magic numers defined in UI.h as UIL/UIR
+- [ ] rest of UI drawing - all magic numers defined in UI.h as UIL/UIR
 - [ ] move TimeSync contents to some class
 - [x] standardize debug messages on console
 - [ ] improve code as of 2025-W30 (remove warnings, duplicates)

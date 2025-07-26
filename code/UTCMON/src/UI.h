@@ -14,6 +14,51 @@
 #define DISPLAY_SENDBUFFER_DURATION_WARN_US 8000
 #define DISPLAY_SENDBUFFER_JITTER_WARN_US   1000
 
+#define DISP_W 256
+#define DISP_H 64
+
+#define UIL_ICN_FF u8g2_font_streamline_all_t // https://github.com/olikraus/u8g2/wiki/fntgrpstreamline#streamline_all
+#define UIL_ICN_FW 20 // spec is 21, but 20 is fine
+#define UIL_ICN_FH 20 // spec is 21, but 20 is fine
+#define UIL_ICN_X  0
+#define UIL_ICN_Y  UIL_ICN_FH
+#define UIL_ICN_W  UIL_ICN_FW*1 // 1 icon
+#define UIL_ICN_GLYPH_OFFLINE 0x0206 // 0x019e
+#define UIL_ICN_GLYPH_ONLINE  0x01fd
+
+#define UIL_TOP_FF u8g2_font_logisoso16_tr // https://github.com/olikraus/u8g2/wiki/fntgrplogisoso#logisoso16
+#define UIL_TOP_FH UIL_ICN_FH
+#define UIL_TOP_FW 15
+#define UIL_TOP_X  UIL_ICN_W
+#define UIL_TOP_Y  UIL_TOP_FH
+
+#define UIL_DAT_FF u8g2_font_logisoso38_tn // https://github.com/olikraus/u8g2/wiki/fntgrplogisoso#logisoso38
+#define UIL_DAT_FW (22+2) // spec is 22, char dist is 2
+#define UIL_DAT_FH 38
+#define UIL_DAT_X  0
+#define UIL_DAT_Y  DISP_H
+#define UIL_DAT_W  UIL_DAT_FW*10 // "YYYY-MM-DD" is 10 characters long
+
+// TODO: implement UIL_XTR_* for using spare space between end of date and end of screen (width: 16px, height: 38px)
+
+#define UIL_INF_FF u8g2_font_t0_12_tr // https://github.com/olikraus/u8g2/wiki/fntgrpttyp0#t0_12
+#define UIL_INF_FH 10
+#define UIL_INF_FW 6
+
+#define UIL_SEN_COL_WIDTH UIL_INF_FW*7 // "1234mm!" / "12345lx"
+#define UIL_SEN_COL_MARGIN 1
+#define UIL_SEN_COL_PADDING 1
+#define UIL_SEN_Y0 0
+#define UIL_SEN_X2 DISP_W-UIL_SEN_COL_WIDTH //was: 215
+#define UIL_SEN_X1 UIL_SEN_X2-UIL_SEN_COL_PADDING-UIL_SEN_COL_MARGIN-UIL_SEN_COL_PADDING-UIL_SEN_COL_WIDTH
+#define UIL_SEN_W  DISP_W-UIL_SEN_X1
+#define UIL_SEN_H  2*UIL_INF_FH
+
+#define UIL_NTP_W  UIL_INF_FW*13 // "drift 123ms" / "sync 123 ago"
+#define UIL_NTP_H  2*UIL_INF_FH
+#define UIL_NTP_X  DISP_W-UIL_NTP_W
+#define UIL_NTP_Y  0
+
 struct DisplayConfig {
   uint32_t Frequency;
   uint8_t CS;
