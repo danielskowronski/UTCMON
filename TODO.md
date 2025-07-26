@@ -30,6 +30,8 @@ internal reference: `DSx2500A`
   - [x] observation and research
   - [x] periodic screen redraw
   - [x] frequency and setup
+  - [.] workaround for SPI transmission broken due to other cores triggering inetrrupts
+  - [ ] fix SPI transmission in u8g2  https://github.com/olikraus/u8g2/issues/2682
 
 ## current work
 
@@ -37,10 +39,12 @@ internal reference: `DSx2500A`
 
 - [x] controllable NTP sync
 - [x] NTP drift detection
+- [ ] WiFi reconnect after ESP_ERR_WIFI_CONN reinits NTP client, which fails assertion `assert failed: sntp_setoperatingmode /IDF/components/lwip/lwip/src/apps/sntp/sntp.c:748 (Operating mode must not be set while SNTP client is running)` and crashes device
 - [ ] move TimeSync contents to some class
 - [x] standardize debug messages on console
 - [ ] improve code as of 2025-W30 (remove warnings, duplicates)
 - [ ] improve UI render formatting
+- [ ] cover all places where we could check init status, attempt checking display update status 
 - [-] better brightness control (without flicker) -> can't be done better
 - [ ] timezone change UI - virtual buttons
 - [ ] brightness control UI - virtual buttons

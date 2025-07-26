@@ -1,4 +1,4 @@
-#define VERSION "v0.3.3"
+#define VERSION "v0.3.4"
 #ifndef BUILD_DATE
   #define BUILD_DATE "YYYY-MM-DD"
 #endif
@@ -80,6 +80,68 @@ void WiFiStationDisconnected(WiFiEvent_t event, WiFiEventInfo_t info){
   logger.warn(TAG_NET, "WiFi disconnected with event %d and reason", event, info.wifi_sta_disconnected.reason);
   WiFiConnect();
 }
+
+
+int avg_lux;
+int contrast=255;
+int lux_l; // only for debug phase
+int lux_r; // only for debug phase
+int mm_l; 
+int mm_r;
+DateTimeStruct dts;
+uint64_t lastDisplayReset = 0;
+
+String fmtDist(int mm) {
+  if (mm > 8000) return "-----";
+  char buffer[8];
+  sprintf(buffer, "%3d.%d", mm / 10, mm % 10);
+  return String(buffer);
+}
+void periodicDisplayReset() {
+  time_t now = time(nullptr);
+  if (now - lastDisplayReset > System::PeriodicDisplayReset::Period) {
+    logger.debug(TAG_DISP_RST, "Periodic display reset (last: %10lld, period: %lld)", static_cast<long long>(lastDisplayReset), static_cast<long long>(System::PeriodicDisplayReset::Period));
+    lastDisplayReset = now;
+    //ui.init();
+    //ui.resetScreens();
+  }
+}
+
+void displayTask(void* pvParameters) {
+  (void)pvParameters;
+  for (;;) {
+    DateTimeStruct dts = dt.getDateTimeStruct();
+
+    periodicDisplayReset();
+    checkNtpDriftIfNeeded();
+    
+    mm_l = distance.getLeft();
+    mm_r = distance.getRight();
+    lux_l = light.getLeft();
+    lux_r = light.getRight();
+    avg_lux = light.getAvg();
+
+    if (avg_lux > 512) contrast = 255;
+    else contrast = int(avg_lux / 2);
+    logger.verbose(TAG_SENSORS, "distL=%s distR=%s | luxL=%5d luxR=%5d cont=%3d",
+                   fmtDist(mm_l), fmtDist(mm_r), lux_l, lux_r, contrast);
+
+    ui.setContrast(contrast);
+    ui.drawClock(dts, mm_l, mm_r, lux_l, lux_r);
+
+    vTaskDelay(pdMS_TO_TICKS(333));
+  }
+}
+
+
+// TODO: split to threads - one for clock, one for sensors
+void loop() {
+  if (WiFi.status() != WL_CONNECTED) {
+    WiFiConnect();
+  }
+  vTaskDelay(pdMS_TO_TICKS(1000));
+}
+
 void setup() {
   Serial.begin(CommonBus::Serial::Baudrate);
   while(!Serial); logger.forwardTo(&Serial);
@@ -107,62 +169,17 @@ void setup() {
 
 
   delay(2000);
-  
+
+  xTaskCreatePinnedToCore(
+    displayTask,           // function
+    "Display",             // name
+    8192,                  // stack size in bytes
+    NULL,                  // parameters
+    configMAX_PRIORITIES-1,// priority
+    NULL,                  // task handle
+    0                      // run on core 1 // 0 = one with wifi // <--- this is latest change + noInterrupts
+  );
+
   dt=DateTime("Europe/Warsaw");
   ui.setDateDisplayMode(DateDisplayMode::FullAndNTP);
-}
-
-
-int avg_lux;
-int contrast=255;
-int lux_l; // only for debug phase
-int lux_r; // only for debug phase
-int mm_l; 
-int mm_r;
-DateTimeStruct dts;
-uint64_t lastDisplayReset = 0;
-
-void periodicDisplayReset() {
-  time_t now = time(nullptr);
-  if (now - lastDisplayReset > System::PeriodicDisplayReset::Period) {
-    logger.debug(TAG_DISP_RST, "Periodic display reset (last: %10d, period: %d)", lastDisplayReset, System::PeriodicDisplayReset::Period);
-    lastDisplayReset = now;
-    ui.resetScreens();
-    //ui.init();
-  }
-}
-
-String fmtDist(int mm) {
-  if (mm > 8000) return "-----";
-  char buffer[8];
-  sprintf(buffer, "%3d.%d", mm / 10, mm % 10);
-  return String(buffer);
-}
-
-// TODO: split to threads - one for clock, one for sensors
-void loop() {
-  if (WiFi.status() != WL_CONNECTED)  WiFiConnect();
-
-  dts=dt.getDateTimeStruct();
-
-  periodicDisplayReset();
-  checkNtpDriftIfNeeded();
-
-
-  mm_l = distance.getLeft();
-  mm_r = distance.getRight();
-
-
-  lux_l = light.getLeft();
-  lux_r = light.getRight();
-  avg_lux = light.getAvg();
-
-  if (avg_lux>512) contrast=255; else contrast=int(avg_lux/2); // TODO: move contrast calc to some better place + parametrize values
-  logger.verbose(TAG_SENSORS, "distL=%s distR=%s | luxL=%5d luxR=%5d cont=%3d", fmtDist(mm_l), fmtDist(mm_r), lux_l, lux_r, contrast);
-
-  ui.setContrast(contrast);
-
-  ui.drawClock(dts, mm_l, mm_r, lux_l, lux_r);
-
-  delay(250); 
 }

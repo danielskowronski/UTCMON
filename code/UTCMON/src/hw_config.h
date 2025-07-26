@@ -5,6 +5,10 @@
 #include "LightSensors.h"
 #include "DistanceSensors.h"
 
+#define kHz 1000
+#define MHz 1000000
+#define SPI_FREQUENCY 30*MHz
+
 namespace LeftBus {
   namespace I2C {
     extern const uint32_t Frequency;

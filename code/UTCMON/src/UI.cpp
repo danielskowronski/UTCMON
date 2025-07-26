@@ -2,6 +2,7 @@
 #include "common.h"
 #include <U8g2lib.h>
 #include "TimeSync.h"
+#include "Logging.h"
 
 UI::UI(DisplayConfig leftConfig, DisplayConfig rightConfig){
   this->leftConfig = leftConfig;
@@ -99,6 +100,11 @@ void UI::drawClock(DateTimeStruct dt, int mm_l, int mm_r, int lux_l, int lux_r){
   }
 
   this->sendBuffer(this->left);
+
+  //while (digitalRead(this->rightConfig.CS) == LOW) {
+  //  logger.warn(TAG_DISPLAYS, "drawClock: waiting for Right CS to be released");
+  //  delayMicroseconds(100);
+  //}
 
   this->right.clearBuffer();
 

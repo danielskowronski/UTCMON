@@ -2,7 +2,7 @@
 
 namespace LeftBus {
   namespace I2C {
-    const uint32_t Frequency = 100000; // 100 kHz
+    const uint32_t Frequency = 100*kHz;
   }
   namespace LightSensor {
     const LightSensorConfig config = {
@@ -22,7 +22,7 @@ namespace LeftBus {
   }
   namespace Display {
     const DisplayConfig config = {
-      .Frequency = 3000000, // 300 kHz
+      .Frequency = SPI_FREQUENCY,
       .CS = 5,
       .DC = 0,
       .RESET = 4
@@ -32,7 +32,7 @@ namespace LeftBus {
 
 namespace RightBus {
   namespace I2C {
-    const uint32_t Frequency = 100000; // 100 kHz
+    const uint32_t Frequency = 100*kHz;
   }
   namespace LightSensor {
     const LightSensorConfig config = {
@@ -52,7 +52,7 @@ namespace RightBus {
   }
   namespace Display {
     const DisplayConfig config = {
-      .Frequency = 3000000, // 300 kHz
+      .Frequency = SPI_FREQUENCY,
       .CS = 25,
       .DC = 26,
       .RESET = 27
@@ -65,7 +65,7 @@ namespace CommonBus {
     const uint32_t Baudrate = 115200;
   }
   namespace SPI {
-    const uint32_t Frequency = 3000000; // 300 kHz, 1.5MHz is too fast for the display
+    const uint32_t Frequency = SPI_FREQUENCY;
     const int8_t MOSI = 23; // VSPI MOSI pin
     const int8_t MISO = 19; // VSPI MISO pin
     const int8_t SCK = 18;  // VSPI SCLK pin
@@ -92,6 +92,6 @@ namespace System {
   }
   namespace Logging {
     // WARN: ARDUHAL_LOG_LEVEL_INFO < ARDUHAL_LOG_LEVEL_DEBUG < ARDUHAL_LOG_LEVEL_VERBOSE
-    extern const uint8_t Level = ARDUHAL_LOG_LEVEL_VERBOSE; // ARDUHAL_LOG_LEVEL_INFO / ARDUHAL_LOG_LEVEL_DEBUG
+    extern const uint8_t Level = ARDUHAL_LOG_LEVEL_DEBUG; // ARDUHAL_LOG_LEVEL_INFO / ARDUHAL_LOG_LEVEL_DEBUG
   }
 }
