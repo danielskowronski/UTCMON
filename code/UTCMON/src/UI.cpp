@@ -49,7 +49,7 @@ void UI::resetScreens(){
 void UI::setDateDisplayMode(DateDisplayMode mode) {
   this->dateDisplayMode = mode;
 }
-void UI::drawClock(DateTimeStruct dt, int mm_l, int mm_r, int lux_l, int lux_r){
+void UI::drawClock(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l, int lux_r){
   char buffer[256];
 
   this->left.clearBuffer();
@@ -73,17 +73,15 @@ void UI::drawClock(DateTimeStruct dt, int mm_l, int mm_r, int lux_l, int lux_r){
   switch (this->dateDisplayMode){
     case FullAndSensors:
         // Left screen, top line, small: distance
-        if (mm_l<=2500) sprintf(buffer, "% 4d.%d cm", int(mm_l/10), mm_l%10); else sprintf(buffer, " >>>>> cm");
         this->left.setFont(u8g2_font_t0_12_tr);
-        this->left.drawStr(140,10,buffer);
-        sprintf(buffer, "% 6d lx", lux_l);
+        this->left.drawStr(140,10,DistanceSensors::fmtDist(dsp.left, true, true).c_str());
+        sprintf(buffer, "% 5dlux", lux_l);
         this->left.setFont(u8g2_font_t0_12_tr);
         this->left.drawStr(140,20,buffer);
 
-        if (mm_r<=2500) sprintf(buffer, "% 4d.%d cm", int(mm_r/10), mm_r%10); else sprintf(buffer, " >>>>> cm");
         this->left.setFont(u8g2_font_t0_12_tr);
-        this->left.drawStr(200,10,buffer);
-        sprintf(buffer, "% 6d lx", lux_r);
+        this->left.drawStr(200,10,DistanceSensors::fmtDist(dsp.right, true, true).c_str());
+        sprintf(buffer, "% 5dlux", lux_r);
         this->left.setFont(u8g2_font_t0_12_tr);
         this->left.drawStr(200,20,buffer);
       break;

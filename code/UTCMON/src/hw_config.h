@@ -9,6 +9,8 @@
 #define MHz 1000000
 #define SPI_FREQUENCY 30*MHz
 
+// FIXME: LeftBust and RightBust should inherit from some SideBus
+
 namespace LeftBus {
   namespace I2C {
     extern const uint32_t Frequency;
@@ -23,6 +25,7 @@ namespace LeftBus {
   };
   namespace DistanceSensor {
     extern const DistanceSensorConfig config;
+    extern const uint16_t TriggeringThreshold;
   };
   namespace Display {
     extern const DisplayConfig config;
@@ -42,6 +45,7 @@ namespace RightBus {
   };
   namespace DistanceSensor {
     extern const DistanceSensorConfig config;
+    extern const uint16_t TriggeringThreshold;
   };
   namespace Display {
     extern const DisplayConfig config;

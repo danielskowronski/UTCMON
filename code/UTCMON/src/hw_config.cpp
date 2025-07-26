@@ -17,8 +17,9 @@ namespace LeftBus {
     const DistanceSensorConfig config = {
       .I2CAddress = 0x29,
       .DebugEnabled = false,
-      .Mode = Adafruit_VL53L0X::VL53L0X_SENSE_HIGH_SPEED
+      .Mode = Adafruit_VL53L0X::VL53L0X_SENSE_HIGH_ACCURACY
     };
+    const uint16_t TriggeringThreshold = 100; // 10cm
   }
   namespace Display {
     const DisplayConfig config = {
@@ -47,8 +48,9 @@ namespace RightBus {
     const DistanceSensorConfig config = {
       .I2CAddress = 0x29,
       .DebugEnabled = false,
-      .Mode = Adafruit_VL53L0X::VL53L0X_SENSE_HIGH_SPEED
+      .Mode = Adafruit_VL53L0X::VL53L0X_SENSE_HIGH_ACCURACY
     };
+    const uint16_t TriggeringThreshold = 100; // 10cm
   }
   namespace Display {
     const DisplayConfig config = {
@@ -92,6 +94,6 @@ namespace System {
   }
   namespace Logging {
     // WARN: ARDUHAL_LOG_LEVEL_INFO < ARDUHAL_LOG_LEVEL_DEBUG < ARDUHAL_LOG_LEVEL_VERBOSE
-    extern const uint8_t Level = ARDUHAL_LOG_LEVEL_DEBUG; // ARDUHAL_LOG_LEVEL_INFO / ARDUHAL_LOG_LEVEL_DEBUG
+    extern const uint8_t Level = ARDUHAL_LOG_LEVEL_VERBOSE; // ARDUHAL_LOG_LEVEL_INFO / ARDUHAL_LOG_LEVEL_DEBUG
   }
 }

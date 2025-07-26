@@ -1,4 +1,4 @@
-#define VERSION "v0.3.4"
+#define VERSION "v0.3.5"
 #ifndef BUILD_DATE
   #define BUILD_DATE "YYYY-MM-DD"
 #endif
@@ -86,48 +86,28 @@ int avg_lux;
 int contrast=255;
 int lux_l; // only for debug phase
 int lux_r; // only for debug phase
-int mm_l; 
-int mm_r;
 DateTimeStruct dts;
-uint64_t lastDisplayReset = 0;
+DistanceStatusPair dsp;
 
-String fmtDist(int mm) {
-  if (mm > 8000) return "-----";
-  char buffer[8];
-  sprintf(buffer, "%3d.%d", mm / 10, mm % 10);
-  return String(buffer);
-}
-void periodicDisplayReset() {
-  time_t now = time(nullptr);
-  if (now - lastDisplayReset > System::PeriodicDisplayReset::Period) {
-    logger.debug(TAG_DISP_RST, "Periodic display reset (last: %10lld, period: %lld)", static_cast<long long>(lastDisplayReset), static_cast<long long>(System::PeriodicDisplayReset::Period));
-    lastDisplayReset = now;
-    //ui.init();
-    //ui.resetScreens();
-  }
-}
 
 void displayTask(void* pvParameters) {
   (void)pvParameters;
   for (;;) {
     DateTimeStruct dts = dt.getDateTimeStruct();
 
-    periodicDisplayReset();
     checkNtpDriftIfNeeded();
     
-    mm_l = distance.getLeft();
-    mm_r = distance.getRight();
+    dsp = distance.getSensorsStatus();
     lux_l = light.getLeft();
     lux_r = light.getRight();
     avg_lux = light.getAvg();
 
     if (avg_lux > 512) contrast = 255;
     else contrast = int(avg_lux / 2);
-    logger.verbose(TAG_SENSORS, "distL=%s distR=%s | luxL=%5d luxR=%5d cont=%3d",
-                   fmtDist(mm_l), fmtDist(mm_r), lux_l, lux_r, contrast);
+    //logger.verbose(TAG_SENSORS, "distL=%s distR=%s | luxL=%5d luxR=%5d cont=%3d", fmtDist(mm_l), fmtDist(mm_r), lux_l, lux_r, contrast); // FIXME: move to separare function / class
 
     ui.setContrast(contrast);
-    ui.drawClock(dts, mm_l, mm_r, lux_l, lux_r);
+    ui.drawClock(dts, dsp, lux_l, lux_r);
 
     vTaskDelay(pdMS_TO_TICKS(333));
   }
@@ -182,4 +162,5 @@ void setup() {
 
   dt=DateTime("Europe/Warsaw");
   ui.setDateDisplayMode(DateDisplayMode::FullAndNTP);
+  ui.setDateDisplayMode(DateDisplayMode::FullAndSensors);
 }

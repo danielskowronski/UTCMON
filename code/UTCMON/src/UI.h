@@ -9,6 +9,7 @@
 #include <DateTime.h>
 #include <SPI.h>
 #include "common.h"
+#include "DistanceSensors.h"
 
 struct DisplayConfig {
   uint32_t Frequency;
@@ -44,6 +45,6 @@ public:
   void drawInitScreenNetPhase3();
   void drawInitScreenNetPhase4(int driftMs);
   void setDateDisplayMode(DateDisplayMode mode);
-  void drawClock(DateTimeStruct dt, int mm_l, int mm_r, int lux_l, int lux_r);
+  void drawClock(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l, int lux_r);
   void setContrast(int contrast);
 };
