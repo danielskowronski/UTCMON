@@ -17,9 +17,11 @@ namespace LeftBus {
     const DistanceSensorConfig config = {
       .I2CAddress = 0x29,
       .DebugEnabled = false,
-      .Mode = Adafruit_VL53L0X::VL53L0X_SENSE_HIGH_ACCURACY
+      .Mode = Adafruit_VL53L0X::VL53L0X_SENSE_HIGH_SPEED,
+      .TriggeringHoldUs = 420*1000, // 420ms
+      .TriggeringThreshold = 250, // 2.5cm
+      .alias = "LEFT "
     };
-    const uint16_t TriggeringThreshold = 100; // 10cm
   }
   namespace Display {
     const DisplayConfig config = {
@@ -48,9 +50,11 @@ namespace RightBus {
     const DistanceSensorConfig config = {
       .I2CAddress = 0x29,
       .DebugEnabled = false,
-      .Mode = Adafruit_VL53L0X::VL53L0X_SENSE_HIGH_ACCURACY
+      .Mode = Adafruit_VL53L0X::VL53L0X_SENSE_HIGH_SPEED,
+      .TriggeringHoldUs = 429*1000, // 420ms
+      .TriggeringThreshold = 250, // 2.5cm
+      .alias = "RIGHT"
     };
-    const uint16_t TriggeringThreshold = 100; // 10cm
   }
   namespace Display {
     const DisplayConfig config = {
@@ -71,29 +75,5 @@ namespace CommonBus {
     const int8_t MOSI = 23; // VSPI MOSI pin
     const int8_t MISO = 19; // VSPI MISO pin
     const int8_t SCK = 18;  // VSPI SCLK pin
-  }
-}
-
-namespace System {
-  namespace PeriodicDisplayReset {
-    const uint64_t Period = 1*60*60; // 1 hour
-  }
-  namespace NTP {
-    const uint64_t SyncIntervalMs = 15*60*1000; // 15 minutes
-    const uint64_t CheckPeriodS = 60; // 1 minute
-    const char* ServerHost = "pool.ntp.org";
-    const int ServerPort = 123;
-    const int LocalPort = 2390; // arbitrary, should not conflict with other services
-  }
-  namespace VirtualButtons {
-    const uint32_t TimeToActivateMs = 500;
-  }
-  namespace Network {
-    extern const int ConnCheckPeriodMs = 500;
-    extern const int ConnCheckCount = 60*(1000 / ConnCheckPeriodMs); // 1 minute
-  }
-  namespace Logging {
-    // WARN: ARDUHAL_LOG_LEVEL_INFO < ARDUHAL_LOG_LEVEL_DEBUG < ARDUHAL_LOG_LEVEL_VERBOSE
-    extern const uint8_t Level = ARDUHAL_LOG_LEVEL_DEBUG; // ARDUHAL_LOG_LEVEL_INFO / ARDUHAL_LOG_LEVEL_DEBUG
   }
 }

@@ -1,5 +1,5 @@
 #include "TimeSync.h"
-#include "hw_config.h"
+#include "sys_config.h"
 #include "Logging.h"
 NtpDiagnostics ntpDiagnostics;
 WiFiUDP udp;

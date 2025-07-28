@@ -1,9 +1,18 @@
 #pragma once
 #include <Arduino.h>
 #include <Adafruit_VL53L0X.h>
-#include "UI.h"
 #include "LightSensors.h"
-#include "DistanceSensors.h"
+#include "DistanceSensor.h"
+
+// Display configuration for U8g2 screens
+struct DisplayConfig {
+  uint32_t Frequency;
+  uint8_t CS;
+  uint8_t DC;
+  uint8_t RESET;
+};
+#include "LightSensors.h"
+#include "DistanceSensor.h"
 
 #define kHz 1000
 #define MHz 1000000
@@ -25,7 +34,6 @@ namespace LeftBus {
   };
   namespace DistanceSensor {
     extern const DistanceSensorConfig config;
-    extern const uint16_t TriggeringThreshold;
   };
   namespace Display {
     extern const DisplayConfig config;
@@ -45,7 +53,6 @@ namespace RightBus {
   };
   namespace DistanceSensor {
     extern const DistanceSensorConfig config;
-    extern const uint16_t TriggeringThreshold;
   };
   namespace Display {
     extern const DisplayConfig config;
@@ -61,27 +68,4 @@ namespace CommonBus {
     extern const int8_t MISO;
     extern const int8_t SCK;
   };
-}
-
-namespace System {
-  namespace PeriodicDisplayReset {
-    extern const uint64_t Period;
-  }
-  namespace NTP {
-    extern const uint64_t SyncIntervalMs;
-    extern const uint64_t CheckPeriodS;
-    extern const char* ServerHost;
-    extern const int ServerPort;
-    extern const int LocalPort;
-  }
-  namespace VirtualButtons {
-    extern const uint32_t TimeToActivateMs;
-  }
-  namespace Network {
-    extern const int ConnCheckPeriodMs;
-    extern const int ConnCheckCount;
-  }
-  namespace Logging {
-    extern const uint8_t Level;
-  }
 }

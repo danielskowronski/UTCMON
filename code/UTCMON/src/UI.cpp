@@ -3,7 +3,8 @@
 #include "TimeSync.h"
 #include "Logging.h"
 #include "WiFi.h"
-#include <U8g2lib.h>
+#include <U8g2lib.h> 
+#include <new>
 
 UI::UI(DisplayConfig leftConfig, DisplayConfig rightConfig){
   this->leftConfig = leftConfig;
@@ -16,11 +17,11 @@ void UI::sendBuffer(U8G2 &screen) {
 }
 DevicePairInitSuccess UI::init(){
   DevicePairInitSuccess initSuccess;
-  this->left = U8G2_SSD1322_NHD_256X64_F_4W_HW_SPI(U8G2_R0, leftConfig.CS, leftConfig.DC, leftConfig.RESET);
+  new (&this->left) U8G2_SSD1322_NHD_256X64_F_4W_HW_SPI(U8G2_R0, leftConfig.CS, leftConfig.DC, leftConfig.RESET);
   this->left.setBusClock(leftConfig.Frequency);
   initSuccess.left = this->left.begin();
-  
-  this->right = U8G2_SSD1322_NHD_256X64_F_4W_HW_SPI(U8G2_R0, rightConfig.CS, rightConfig.DC, rightConfig.RESET);
+
+  new (&this->right) U8G2_SSD1322_NHD_256X64_F_4W_HW_SPI(U8G2_R0, rightConfig.CS, rightConfig.DC, rightConfig.RESET);
   this->right.setBusClock(rightConfig.Frequency);
   initSuccess.right = this->right.begin();
 
@@ -50,11 +51,37 @@ void UI::resetScreens(){
 void UI::setDateDisplayMode(DateDisplayMode mode) {
   this->dateDisplayMode = mode;
 }
-void UI::drawClock(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l, int lux_r){
+bool UI::needToRedrawDate(DisplayContentsDate newDisplayContentsDate) {
+  bool need=false;
+  if (this->displayContentsDate.year != newDisplayContentsDate.year ||
+      this->displayContentsDate.month != newDisplayContentsDate.month ||
+      this->displayContentsDate.day != newDisplayContentsDate.day ||
+      this->displayContentsDate.week != newDisplayContentsDate.week ||
+      this->displayContentsDate.weekday != newDisplayContentsDate.weekday ||
+      this->displayContentsDate.lastNtpSync != newDisplayContentsDate.lastNtpSync ||
+      this->displayContentsDate.lastDriftMs != newDisplayContentsDate.lastDriftMs ||
+      this->displayContentsDate.colorsInverted != newDisplayContentsDate.colorsInverted || 
+      this->displayContentsDate.netIcon != newDisplayContentsDate.netIcon
+  ) {
+    need = true;
+  }
+  return need;
+}
+void UI::setInvert(U8G2 &screen, bool enable) {
+  if (enable) {
+    screen.setDrawColor(1);
+    screen.drawBox(0, 0, DISP_W, DISP_H);
+    screen.setDrawColor(0);
+  } else {
+    screen.setDrawColor(1);
+  }
+}
+uint32_t UI::drawClockDate(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l, int lux_r, uint16_t netIcon){
   char buffer[256];
-  uint32_t beforeFirst, afterFirst, beforeSecond, afterSecond, deltaFirst, deltaSecond, jitter;
+  uint32_t beforeFirst, afterFirst, deltaFirst;
 
   this->left.clearBuffer();
+  this->setInvert(this->left, dsp.left.triggering);
 
   switch (this->dateDisplayMode){
     case FullOnlyDate:
@@ -65,9 +92,8 @@ void UI::drawClock(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l, int lux
       this->left.setFont(UIL_DAT_FF);
       this->left.drawStr(UIL_DAT_X,UIL_DAT_Y,buffer);
       // Left screen, top line, small: status icon ()
-      uint16_t icon = (WiFi.status() != WL_CONNECTED) ? UIL_ICN_GLYPH_OFFLINE : UIL_ICN_GLYPH_ONLINE;
       this->left.setFont(UIL_ICN_FF);
-      this->left.drawGlyph(UIL_ICN_X,UIL_ICN_Y,icon);
+      this->left.drawGlyph(UIL_ICN_X,UIL_ICN_Y,netIcon);
 
       // Left screen, top line, small: ISO week - Weekeday
       sprintf(buffer, "W%02d %.16s", dt.week, dt.weekday); // "Wednesday"
@@ -81,7 +107,7 @@ void UI::drawClock(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l, int lux
     case FullAndSensors:
         // Left screen, top line, small: distance
         this->left.setFont(UIL_INF_FF);
-        this->left.drawStr(UIL_SEN_X1,UIL_INF_FH,DistanceSensors::fmtDist(dsp.left, true, true, true).c_str());
+        this->left.drawStr(UIL_SEN_X1,UIL_INF_FH,DistanceSensor::fmtDist(dsp.left, true, true, true).c_str());
         sprintf(buffer, "%05dlx", lux_l);
         this->left.setFont(UIL_INF_FF);
         this->left.drawStr(UIL_SEN_X1,UIL_INF_FH*2,buffer);
@@ -89,14 +115,14 @@ void UI::drawClock(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l, int lux
         this->left.drawBox(UIL_SEN_X2-UIL_SEN_COL_PADDING, UIL_SEN_Y0, UIL_SEN_COL_MARGIN, UIL_SEN_H);
 
         this->left.setFont(UIL_INF_FF);
-        this->left.drawStr(UIL_SEN_X2,UIL_INF_FH,DistanceSensors::fmtDist(dsp.right, true, true, true).c_str());
+        this->left.drawStr(UIL_SEN_X2,UIL_INF_FH,DistanceSensor::fmtDist(dsp.right, true, true, true).c_str());
         sprintf(buffer, "%05dlx", lux_r);
         this->left.setFont(UIL_INF_FF);
         this->left.drawStr(UIL_SEN_X2,UIL_INF_FH*2,buffer);
       break;
     case FullAndNTP:
       this->left.setFont(UIL_INF_FF);
-      sprintf(buffer, "drift % 4dms", ntpDiagnostics.lastDriftMs);
+      sprintf(buffer, "drift % 5dms", ntpDiagnostics.lastDriftMs);
       this->left.drawStr(UIL_NTP_X,UIL_INF_FH,buffer);
       sprintf(buffer, "sync % 3dm ago", minutesSinceLastNtpSync());
       this->left.drawStr(UIL_NTP_X,UIL_INF_FH*2,buffer);
@@ -110,12 +136,15 @@ void UI::drawClock(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l, int lux
   this->sendBuffer(this->left);
   afterFirst = micros();
 
-  //while (digitalRead(this->rightConfig.CS) == LOW) {
-  //  logger.warn(TAG_DISPLAYS, "drawClock: waiting for Right CS to be released");
-  //  delayMicroseconds(100);
-  //}
+  deltaFirst = afterFirst - beforeFirst;
+  return deltaFirst;
+}
+uint32_t UI::drawClockTime(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l, int lux_r){
+  char buffer[256];
+  uint32_t beforeSecond, afterSecond, deltaSecond;
 
   this->right.clearBuffer();
+  setInvert(this->right, dsp.right.triggering);
 
   // Right screen, bottom line, large: HH:MM
   sprintf(buffer, "%02d:%02d", dt.hour, dt.minute);
@@ -136,12 +165,79 @@ void UI::drawClock(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l, int lux
   this->sendBuffer(this->right);
   afterSecond = micros();
 
-  deltaFirst = afterFirst - beforeFirst;
   deltaSecond = afterSecond - beforeSecond;
+  return deltaSecond;
+}
+bool UI::needToRedrawTime(DisplayContentsTime newDisplayContentsTime) {
+  bool need=false;
+  if (this->displayContentsTime.hour != newDisplayContentsTime.hour ||
+      this->displayContentsTime.minute != newDisplayContentsTime.minute ||
+      this->displayContentsTime.second != newDisplayContentsTime.second ||
+      this->displayContentsTime.timezone != newDisplayContentsTime.timezone ||
+      this->displayContentsTime.colorsInverted != newDisplayContentsTime.colorsInverted
+  ) {
+    need = true;
+  }
+  return need;
+}
+void UI::drawClock(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l, int lux_r){
+  char buffer[256];
+  uint32_t beforeFirst, afterFirst, beforeSecond, afterSecond, deltaFirst=0, deltaSecond=0, jitter;
+
+  uint16_t netIcon = (WiFi.status() != WL_CONNECTED) ? UIL_ICN_GLYPH_OFFLINE : UIL_ICN_GLYPH_ONLINE;
+
+  // TODO: support updating only segments that changed
+
+  bool needToRedrawDate, needToRedrawTime;
+  DisplayContentsDate newDisplayContentsDate = {
+    .year = dt.year,
+    .month = dt.month,
+    .day = dt.day,
+    .week = dt.week,
+    .weekday = dt.weekday,
+    .lastNtpSync = ntpDiagnostics.lastNtpSync,
+    .lastDriftMs = ntpDiagnostics.lastDriftMs,
+    .netIcon = netIcon,
+    .colorsInverted = dsp.left.triggering
+  };
+  DisplayContentsTime newDisplayContentsTime = {
+    .hour = dt.hour,
+    .minute = dt.minute,
+    .second = dt.second,
+    .timezone = dt.timezone,
+    .colorsInverted = dsp.right.triggering
+  };
+
+  switch (this->dateDisplayMode){
+    case FullOnlyDate:
+    case FullAndNTP:
+      needToRedrawDate = this->needToRedrawDate(newDisplayContentsDate);
+      break;
+    case FullAndSensors:
+      needToRedrawDate = true; // sensors always change
+      break;
+  }
+  this->displayContentsDate = newDisplayContentsDate;
+  if (needToRedrawDate) {
+    deltaFirst = this->drawClockDate(dt, dsp, lux_l, lux_r, netIcon);
+  }
+
+  needToRedrawTime = this->needToRedrawTime(newDisplayContentsTime);
+  this->displayContentsTime = newDisplayContentsTime;
+  if (needToRedrawTime) {
+    deltaSecond = this->drawClockTime(dt, dsp, lux_l, lux_r);
+  }
+
   jitter = abs((int)deltaFirst-(int)deltaSecond);
+  bool abnoramJitter = (jitter > DISPLAY_SENDBUFFER_JITTER_WARN_US);
+  bool unexpectedTimeFirst = (deltaFirst > DISPLAY_SENDBUFFER_DURATION_WARN_US);
+  bool unexpectedTimeSecond = (deltaSecond > DISPLAY_SENDBUFFER_DURATION_WARN_US);
+  if (deltaFirst == 0 || deltaSecond == 0) {
+    abnoramJitter = false; // if skipping one of the displays, then jitter cannot be calculated
+  } 
 
   // if any of displays take more than DISPLAY_SENDBUFFER_DURATION_WARN_US to update or if the jitter is more than DISPLAY_SENDBUFFER_JITTER_WARN_US then log a warning, else log as verbose-debug
-  int logLevel = (deltaFirst > DISPLAY_SENDBUFFER_DURATION_WARN_US || deltaSecond > DISPLAY_SENDBUFFER_DURATION_WARN_US || jitter > DISPLAY_SENDBUFFER_JITTER_WARN_US) ? ARDUHAL_LOG_LEVEL_WARN : ARDUHAL_LOG_LEVEL_VERBOSE;
+  int logLevel = (abnoramJitter||unexpectedTimeFirst||unexpectedTimeSecond) ? ARDUHAL_LOG_LEVEL_WARN : ARDUHAL_LOG_LEVEL_VERBOSE;
   logger.log(logLevel, TAG_DISPLAYS, "drawClock: left sendBuffer took %8ld us, right sendBuffer took %8ld us, jitter was %8ld us", deltaFirst, deltaSecond, jitter);
 }
 void UI::drawSplashScreen(String version){

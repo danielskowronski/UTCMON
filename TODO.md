@@ -30,9 +30,11 @@ internal reference: `DSx2500A`
   - [x] observation and research
   - [x] periodic screen redraw
   - [x] frequency and setup
-  - [.] workaround for SPI transmission broken due to other cores triggering inetrrupts
+  - [x] workaround for SPI transmission broken due to other cores triggering inetrrupts
   - [.] further SPI issue diagnostics
   - [ ] fix SPI transmission in u8g2  https://github.com/olikraus/u8g2/issues/2682
+  - [x] reduce data updates when not needed: simple per-screen
+  - [ ] reduce data updates when not needed: segments
 
 ## current work
 
@@ -52,6 +54,7 @@ internal reference: `DSx2500A`
 - [-] better brightness control (without flicker) -> can't be done better
 - [x] distance sensor - wrap in structs, fix logging and formatting
 - [ ] light sensor - wrap in structs, fix logging and formatting
+- [x] distance sensors / virtual buttons - stabilize output, debug print and display marker for tests
 - [ ] timezone change UI - virtual buttons
 - [ ] brightness control UI - virtual buttons
 - [ ] watchdog for abnormal NTP sync -> reboot

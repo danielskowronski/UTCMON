@@ -1,4 +1,4 @@
-#define VERSION "v0.3.7"
+#define VERSION "v0.3.8"
 #ifndef BUILD_DATE
   #define BUILD_DATE "YYYY-MM-DD"
 #endif
@@ -7,6 +7,7 @@
 #include <Arduino.h>
 
 #include "hw_config.h"
+#include "sys_config.h"
 #include "DateTime.h"
 #include "UI.h"
 #include "LightSensors.h"
@@ -91,7 +92,7 @@ int lux_r; // only for debug phase
 DateTimeStruct dts;
 DistanceStatusPair dsp;
 
-
+TaskHandle_t displayHandle = NULL;
 void displayTask(void* pvParameters) {
   (void)pvParameters;
   for (;;) {
@@ -111,7 +112,7 @@ void displayTask(void* pvParameters) {
     ui.setContrast(contrast);
     ui.drawClock(dts, dsp, lux_l, lux_r);
 
-    vTaskDelay(pdMS_TO_TICKS(333));
+    vTaskDelay(pdMS_TO_TICKS(System::Loops::DisplayTaskPeriodMs));
   }
 }
 
@@ -121,7 +122,7 @@ void loop() {
   if (WiFi.status() != WL_CONNECTED) {
     WiFiConnect();
   }
-  vTaskDelay(pdMS_TO_TICKS(1000));
+  vTaskDelay(pdMS_TO_TICKS(System::Loops::LoopTaskPeriodMs));
 }
 
 void setup() {
@@ -157,7 +158,7 @@ void setup() {
     8192,                  // stack size in bytes
     NULL,                  // parameters
     configMAX_PRIORITIES-1,// priority
-    NULL,                  // task handle
+    &displayHandle,        // task handle
     1                      // run on core 1 // 0 = one with wifi
   );
 

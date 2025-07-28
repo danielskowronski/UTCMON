@@ -9,7 +9,9 @@
 #include <DateTime.h>
 #include <SPI.h>
 #include "common.h"
+#include "DistanceSensor.h"
 #include "DistanceSensors.h"
+#include "hw_config.h"
 
 #define DISPLAY_SENDBUFFER_DURATION_WARN_US 8000
 #define DISPLAY_SENDBUFFER_JITTER_WARN_US   1000
@@ -59,17 +61,35 @@
 #define UIL_NTP_X  DISP_W-UIL_NTP_W
 #define UIL_NTP_Y  0
 
-struct DisplayConfig {
-  uint32_t Frequency;
-  uint8_t CS;
-  uint8_t DC;
-  uint8_t RESET;
-};
+
 
 enum DateDisplayMode {
   FullOnlyDate,
   FullAndSensors,
   FullAndNTP
+};
+
+struct DisplayContentsDate {
+  uint16_t year;
+  uint8_t month;
+  uint8_t day;
+  uint8_t week;
+  String weekday;
+
+  time_t lastNtpSync;
+  uint64_t lastDriftMs;
+
+  uint16_t netIcon;
+
+  bool colorsInverted;
+};
+struct DisplayContentsTime {
+  uint8_t hour;
+  uint8_t minute;
+  uint8_t second;
+  String timezone;
+
+  bool colorsInverted;
 };
 
 class UI
@@ -82,6 +102,13 @@ private:
   DisplayConfig rightConfig;
   void resetOneScreen(U8G2 &screen);
   void sendBuffer(U8G2 &screen);
+  uint32_t drawClockDate(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l, int lux_r, uint16_t netIcon);
+  uint32_t drawClockTime(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l, int lux_r);
+  DisplayContentsDate displayContentsDate;
+  DisplayContentsTime displayContentsTime;
+  bool needToRedrawDate(DisplayContentsDate newDisplayContentsDate);
+  bool needToRedrawTime(DisplayContentsTime newDisplayContentsTime);
+  void setInvert(U8G2 &screen, bool enable);
 public:
   UI(DisplayConfig leftConfig, DisplayConfig rightConfig);
   DevicePairInitSuccess init();
