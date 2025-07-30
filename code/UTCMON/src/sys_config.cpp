@@ -20,7 +20,14 @@ namespace System {
     extern const uint8_t Level = ARDUHAL_LOG_LEVEL_DEBUG; // ARDUHAL_LOG_LEVEL_INFO / ARDUHAL_LOG_LEVEL_DEBUG
   }
   namespace Loops {
-    const uint32_t DisplayTaskPeriodMs = 150;
+    const uint32_t DisplayTaskPeriodMs = 100;
     const uint32_t LoopTaskPeriodMs = 2000;
+  }
+  namespace DisplayModes {
+    const char* const timezones[] = {
+      "Europe/Warsaw",
+      "UTC"
+    };
+    const size_t timezones_count = sizeof(timezones) / sizeof(timezones[0]);
   }
 }

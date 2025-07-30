@@ -70,6 +70,8 @@ enum DateDisplayMode {
 };
 
 struct DisplayContentsDate {
+  bool screenBlank;
+
   uint16_t year;
   uint8_t month;
   uint8_t day;
@@ -84,6 +86,8 @@ struct DisplayContentsDate {
   bool colorsInverted;
 };
 struct DisplayContentsTime {
+  bool screenBlank;
+
   uint8_t hour;
   uint8_t minute;
   uint8_t second;
@@ -104,6 +108,7 @@ private:
   void sendBuffer(U8G2 &screen);
   uint32_t drawClockDate(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l, int lux_r, uint16_t netIcon);
   uint32_t drawClockTime(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l, int lux_r);
+  uint32_t drawBlank(U8G2 &screen);
   DisplayContentsDate displayContentsDate;
   DisplayContentsTime displayContentsTime;
   bool needToRedrawDate(DisplayContentsDate newDisplayContentsDate);
@@ -120,6 +125,6 @@ public:
   void drawInitScreenNetPhase3();
   void drawInitScreenNetPhase4(int driftMs);
   void setDateDisplayMode(DateDisplayMode mode);
-  void drawClock(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l, int lux_r);
+  void drawClock(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l, int lux_r, bool blank);
   void setContrast(int contrast);
 };

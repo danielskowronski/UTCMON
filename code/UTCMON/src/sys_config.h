@@ -31,4 +31,8 @@ namespace System {
     extern const uint32_t DisplayTaskPeriodMs;
     extern const uint32_t LoopTaskPeriodMs;
   }
+  namespace DisplayModes {
+    extern const char* const timezones[];
+    extern const size_t timezones_count;
+  }
 }

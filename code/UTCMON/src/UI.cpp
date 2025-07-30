@@ -61,7 +61,8 @@ bool UI::needToRedrawDate(DisplayContentsDate newDisplayContentsDate) {
       this->displayContentsDate.lastNtpSync != newDisplayContentsDate.lastNtpSync ||
       this->displayContentsDate.lastDriftMs != newDisplayContentsDate.lastDriftMs ||
       this->displayContentsDate.colorsInverted != newDisplayContentsDate.colorsInverted || 
-      this->displayContentsDate.netIcon != newDisplayContentsDate.netIcon
+      this->displayContentsDate.netIcon != newDisplayContentsDate.netIcon ||
+      this->displayContentsDate.screenBlank != newDisplayContentsDate.screenBlank
   ) {
     need = true;
   }
@@ -174,13 +175,33 @@ bool UI::needToRedrawTime(DisplayContentsTime newDisplayContentsTime) {
       this->displayContentsTime.minute != newDisplayContentsTime.minute ||
       this->displayContentsTime.second != newDisplayContentsTime.second ||
       this->displayContentsTime.timezone != newDisplayContentsTime.timezone ||
-      this->displayContentsTime.colorsInverted != newDisplayContentsTime.colorsInverted
+      this->displayContentsTime.colorsInverted != newDisplayContentsTime.colorsInverted || 
+      this->displayContentsTime.screenBlank != newDisplayContentsTime.screenBlank
   ) {
     need = true;
   }
   return need;
 }
-void UI::drawClock(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l, int lux_r){
+uint32_t UI::drawBlank(U8G2 &screen) {
+  uint32_t before, after, delta;
+  screen.clearBuffer();
+  screen.setDrawColor(0);
+  screen.drawBox(0, 0, DISP_W, DISP_H);
+  screen.setDrawColor(1);
+
+  screen.drawPixel(0,0);
+  screen.drawPixel(0,DISP_H-1);
+  screen.drawPixel(DISP_W-1,DISP_H-1);
+  screen.drawPixel(DISP_W-1,0);
+
+  before = micros();
+  this->sendBuffer(screen);
+  after = micros();
+
+  delta = after - before;
+  return delta;
+}
+void UI::drawClock(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l, int lux_r, bool blank){
   char buffer[256];
   uint32_t beforeFirst, afterFirst, beforeSecond, afterSecond, deltaFirst=0, deltaSecond=0, jitter;
 
@@ -190,6 +211,7 @@ void UI::drawClock(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l, int lux
 
   bool needToRedrawDate, needToRedrawTime;
   DisplayContentsDate newDisplayContentsDate = {
+    .screenBlank = blank,
     .year = dt.year,
     .month = dt.month,
     .day = dt.day,
@@ -201,6 +223,7 @@ void UI::drawClock(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l, int lux
     .colorsInverted = dsp.left.triggering
   };
   DisplayContentsTime newDisplayContentsTime = {
+    .screenBlank = blank,
     .hour = dt.hour,
     .minute = dt.minute,
     .second = dt.second,
@@ -219,13 +242,15 @@ void UI::drawClock(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l, int lux
   }
   this->displayContentsDate = newDisplayContentsDate;
   if (needToRedrawDate) {
-    deltaFirst = this->drawClockDate(dt, dsp, lux_l, lux_r, netIcon);
+    if (blank) deltaFirst = this->drawBlank(this->left);
+    else deltaFirst = this->drawClockDate(dt, dsp, lux_l, lux_r, netIcon);
   }
 
   needToRedrawTime = this->needToRedrawTime(newDisplayContentsTime);
   this->displayContentsTime = newDisplayContentsTime;
   if (needToRedrawTime) {
-    deltaSecond = this->drawClockTime(dt, dsp, lux_l, lux_r);
+    if (blank) deltaSecond = this->drawBlank(this->right);
+    else deltaSecond = this->drawClockTime(dt, dsp, lux_l, lux_r);
   }
 
   jitter = abs((int)deltaFirst-(int)deltaSecond);

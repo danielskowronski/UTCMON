@@ -1,4 +1,4 @@
-#define VERSION "v0.3.8"
+#define VERSION "v0.3.9"
 #ifndef BUILD_DATE
   #define BUILD_DATE "YYYY-MM-DD"
 #endif
@@ -85,12 +85,19 @@ void WiFiStationDisconnected(WiFiEvent_t event, WiFiEventInfo_t info){
 }
 
 
+// TODO: introduce some struct to hold all displayTask state variables
+bool drawBlank=false;
 int avg_lux;
 int contrast=255;
 int lux_l; // only for debug phase
 int lux_r; // only for debug phase
 DateTimeStruct dts;
 DistanceStatusPair dsp;
+size_t currentTz = 0;
+const char* nextTimezone() {
+  currentTz = (currentTz + 1) % System::DisplayModes::timezones_count;
+  return System::DisplayModes::timezones[currentTz];
+}
 
 TaskHandle_t displayHandle = NULL;
 void displayTask(void* pvParameters) {
@@ -101,6 +108,23 @@ void displayTask(void* pvParameters) {
     checkNtpDriftIfNeeded();
     
     dsp = distance.getSensorsStatus();
+
+    if (dsp.left.triggering && dsp.left.triggeringCounter == 1) {
+      logger.info(TAG_VBUTTONS, "Left vbutton triggered, toggling blank");
+      drawBlank = !drawBlank;
+    }
+    if (dsp.right.triggering && dsp.right.triggeringCounter == 1) {
+      if (drawBlank) {
+        logger.info(TAG_VBUTTONS, "Right vbutton triggered but screen blanked so not taking action");
+      }
+      else {
+        dt.changeTimezone(nextTimezone());
+        dts = dt.getDateTimeStruct();
+        logger.info(TAG_VBUTTONS, "Right vbutton triggered, timezone changed to %s", dts.timezone.c_str());
+      }
+    }
+
+
     lux_l = light.getLeft();
     lux_r = light.getRight();
     avg_lux = light.getAvg();
@@ -110,7 +134,7 @@ void displayTask(void* pvParameters) {
     //logger.verbose(TAG_SENSORS, "distL=%s distR=%s | luxL=%5d luxR=%5d cont=%3d", fmtDist(mm_l), fmtDist(mm_r), lux_l, lux_r, contrast); // FIXME: move to separare function / class
 
     ui.setContrast(contrast);
-    ui.drawClock(dts, dsp, lux_l, lux_r);
+    ui.drawClock(dts, dsp, lux_l, lux_r, drawBlank);
 
     vTaskDelay(pdMS_TO_TICKS(System::Loops::DisplayTaskPeriodMs));
   }
@@ -146,6 +170,7 @@ void setup() {
   DevicePairInitSuccess distanceInitSuccess = distance.init();
 
   ui.drawInitScreenSensor(VER_INFO, distanceInitSuccess.left, lightInitSuccess.left, distanceInitSuccess.right, lightInitSuccess.right);
+  // TODO: if any init fails, attempt system restart
 
   WiFiConnect(true);
   //WiFi.onEvent(WiFiStationDisconnected, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
@@ -162,7 +187,7 @@ void setup() {
     1                      // run on core 1 // 0 = one with wifi
   );
 
-  dt=DateTime("Europe/Warsaw");
+  dt=DateTime(System::DisplayModes::timezones[0]);
   ui.setDateDisplayMode(DateDisplayMode::FullAndNTP);
   //ui.setDateDisplayMode(DateDisplayMode::FullAndSensors);
 }

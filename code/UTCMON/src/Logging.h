@@ -10,3 +10,4 @@ extern Mycila::Logger logger;
 #define TAG_DIST     "DISTANCE"
 #define TAG_SENSORS  "SENSORS "
 #define TAG_DISPLAYS "DISPLAYS"
+#define TAG_VBUTTONS "VBUTTONS"
