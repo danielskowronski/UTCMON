@@ -42,7 +42,7 @@ DistanceStatus DistanceSensor::getSensorStatus() {
   status.triggering = false;
   status.triggeringCounter = 0;
 
-  bool currentTriggering = (status.mm < this->config.TriggeringThreshold);
+  bool currentTriggering = (status.mm < this->config.TriggeringThreshold) && (status.mm > this->config.TriggeringIgnore);
 
   // FIXME: improve how this logic is written
   uint64_t now = micros();

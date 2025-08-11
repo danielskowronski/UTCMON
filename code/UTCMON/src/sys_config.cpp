@@ -31,3 +31,9 @@ namespace System {
     const size_t timezones_count = sizeof(timezones) / sizeof(timezones[0]);
   }
 }
+void sys_config_overrides(){
+  #ifdef STRESS_TEST_LOOP
+  System::Loops::DisplayTaskPeriodMs = 1;
+  System::Loops::LoopTaskPeriodMs = 100;
+  #endif
+}

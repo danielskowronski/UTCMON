@@ -6,12 +6,42 @@
 #include <U8g2lib.h> 
 #include <new>
 
+#include "Fonts.h"
+
+
+void UI::setFont(U8G2 &screen, u8_t size){
+  // FIXME: ensure all setFonts are set in the same way, also support different font variants (text, graphic, different charset) + all those OIL_FF
+  this->setFont(screen, size, this->commonDisplayMode==Hollow);
+}
+void UI::setFont(U8G2 &screen, u8_t size, bool outline) {
+  if (outline) {
+    switch (size) {
+      case 62: screen.setFont(u8g2_font_logisoso62_outline_tn); break; // u8g2_font_spleen32x64_mn 
+      //case 46: screen.setFont(u8g2_font_logisoso46_outline_tn); break;
+      case 38: screen.setFont(u8g2_font_logisoso38_outline_tn); break;
+      case 16: screen.setFont(u8g2_font_calibration_gothic_nbp_tr); break;
+      default: screen.setFont(u8g2_font_logisoso16_tr); break; // fallback
+    }
+  } else {
+    switch (size) {
+      case 62: screen.setFont(u8g2_font_logisoso62_orig_tn); break;
+      case 46: screen.setFont(u8g2_font_logisoso46_tn); break;
+      case 38: screen.setFont(u8g2_font_logisoso38_orig_tn); break;
+      case 16: screen.setFont(u8g2_font_logisoso16_tr); break;
+      default: screen.setFont(u8g2_font_logisoso16_tr); break; // fallback
+    }
+  }
+}
 UI::UI(DisplayConfig leftConfig, DisplayConfig rightConfig){
   this->leftConfig = leftConfig;
   this->rightConfig = rightConfig;
 }
 void UI::sendBuffer(U8G2 &screen) {
   //noInterrupts();
+  // u8x8_d_ssd1322_common
+  if (this->commonDisplayMode == Hollow) {
+    
+  }
   screen.sendBuffer();
   //interrupts();
 }
@@ -51,9 +81,21 @@ void UI::resetScreens(){
 void UI::setDateDisplayMode(DateDisplayMode mode) {
   this->dateDisplayMode = mode;
 }
+void UI::setCommonDisplayMode(CommonDisplayMode mode) {
+  this->commonDisplayMode = mode;
+}
+CommonDisplayMode UI::getCommonDisplayMode(){
+  return this->commonDisplayMode;
+}
 bool UI::needToRedrawDate(DisplayContentsDate newDisplayContentsDate) {
+  #ifdef STRESS_TEST_DRAW
+  return true;
+  #endif
   bool need=false;
-  if (this->displayContentsDate.year != newDisplayContentsDate.year ||
+  if (this->displayContentsTime.commonDisplayMode==Blank && newDisplayContentsDate.commonDisplayMode==Blank) {
+    need = false;
+  }
+  else if (this->displayContentsDate.year != newDisplayContentsDate.year ||
       this->displayContentsDate.month != newDisplayContentsDate.month ||
       this->displayContentsDate.day != newDisplayContentsDate.day ||
       this->displayContentsDate.week != newDisplayContentsDate.week ||
@@ -62,7 +104,7 @@ bool UI::needToRedrawDate(DisplayContentsDate newDisplayContentsDate) {
       this->displayContentsDate.lastDriftMs != newDisplayContentsDate.lastDriftMs ||
       this->displayContentsDate.colorsInverted != newDisplayContentsDate.colorsInverted || 
       this->displayContentsDate.netIcon != newDisplayContentsDate.netIcon ||
-      this->displayContentsDate.screenBlank != newDisplayContentsDate.screenBlank
+      this->displayContentsDate.commonDisplayMode != newDisplayContentsDate.commonDisplayMode
   ) {
     need = true;
   }
@@ -78,6 +120,7 @@ void UI::setInvert(U8G2 &screen, bool enable) {
   }
 }
 uint32_t UI::drawClockDate(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l, int lux_r, uint16_t netIcon){
+  // FIXME: check if dt has valid date, if not - do not draw anything or draw "no date" message (issue happens on first draw after init)
   char buffer[256];
   uint32_t beforeFirst, afterFirst, deltaFirst;
 
@@ -90,7 +133,7 @@ uint32_t UI::drawClockDate(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l,
     case FullAndSensors:
       // Left screen, bottom line, large: YYYY-MM-DD
       sprintf(buffer, "%04d-%02d-%02d", dt.year, dt.month, dt.day);
-      this->left.setFont(UIL_DAT_FF);
+      this->setFont(this->left, 38); //this->left.setFont(UIL_DAT_FF);
       this->left.drawStr(UIL_DAT_X,UIL_DAT_Y,buffer);
       // Left screen, top line, small: status icon ()
       this->left.setFont(UIL_ICN_FF);
@@ -98,39 +141,41 @@ uint32_t UI::drawClockDate(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l,
 
       // Left screen, top line, small: ISO week - Weekeday
       sprintf(buffer, "W%02d %.16s", dt.week, dt.weekday); // "Wednesday"
-      this->left.setFont(UIL_TOP_FF);
+      this->setFont(this->left, 16); //this->left.setFont(UIL_TOP_FF);
       this->left.drawStr(UIL_TOP_X,UIL_TOP_Y,buffer);
 
       break;
   }
 
-  switch (this->dateDisplayMode){
-    case FullAndSensors:
-        // Left screen, top line, small: distance
-        this->left.setFont(UIL_INF_FF);
-        this->left.drawStr(UIL_SEN_X1,UIL_INF_FH,DistanceSensor::fmtDist(dsp.left, true, true, true).c_str());
-        sprintf(buffer, "%05dlx", lux_l);
-        this->left.setFont(UIL_INF_FF);
-        this->left.drawStr(UIL_SEN_X1,UIL_INF_FH*2,buffer);
+  if (this->commonDisplayMode!=Hollow){
+    switch (this->dateDisplayMode){
+      case FullAndSensors:
+          // Left screen, top line, small: distance
+          this->left.setFont(UIL_INF_FF);
+          this->left.drawStr(UIL_SEN_X1,UIL_INF_FH,DistanceSensor::fmtDist(dsp.left, true, true, true).c_str());
+          sprintf(buffer, "%05dlx", lux_l);
+          this->left.setFont(UIL_INF_FF);
+          this->left.drawStr(UIL_SEN_X1,UIL_INF_FH*2,buffer);
 
-        this->left.drawBox(UIL_SEN_X2-UIL_SEN_COL_PADDING, UIL_SEN_Y0, UIL_SEN_COL_MARGIN, UIL_SEN_H);
+          this->left.drawBox(UIL_SEN_X2-UIL_SEN_COL_PADDING, UIL_SEN_Y0, UIL_SEN_COL_MARGIN, UIL_SEN_H);
 
+          this->left.setFont(UIL_INF_FF);
+          this->left.drawStr(UIL_SEN_X2,UIL_INF_FH,DistanceSensor::fmtDist(dsp.right, true, true, true).c_str());
+          sprintf(buffer, "%05dlx", lux_r);
+          this->left.setFont(UIL_INF_FF);
+          this->left.drawStr(UIL_SEN_X2,UIL_INF_FH*2,buffer);
+        break;
+      case FullAndNTP:
         this->left.setFont(UIL_INF_FF);
-        this->left.drawStr(UIL_SEN_X2,UIL_INF_FH,DistanceSensor::fmtDist(dsp.right, true, true, true).c_str());
-        sprintf(buffer, "%05dlx", lux_r);
-        this->left.setFont(UIL_INF_FF);
-        this->left.drawStr(UIL_SEN_X2,UIL_INF_FH*2,buffer);
-      break;
-    case FullAndNTP:
-      this->left.setFont(UIL_INF_FF);
-      sprintf(buffer, "drift % 5dms", ntpDiagnostics.lastDriftMs);
-      this->left.drawStr(UIL_NTP_X,UIL_INF_FH,buffer);
-      sprintf(buffer, "sync % 3dm ago", minutesSinceLastNtpSync());
-      this->left.drawStr(UIL_NTP_X,UIL_INF_FH*2,buffer);
-      break;
-    default:
-      // No additional info
-      break;
+        sprintf(buffer, "drift % 5dms", ntpDiagnostics.lastDriftMs);
+        this->left.drawStr(UIL_NTP_X,UIL_INF_FH,buffer);
+        sprintf(buffer, "sync % 3dm ago", minutesSinceLastNtpSync());
+        this->left.drawStr(UIL_NTP_X,UIL_INF_FH*2,buffer);
+        break;
+      default:
+        // No additional info
+        break;
+    }
   }
 
   beforeFirst = micros();
@@ -148,19 +193,30 @@ uint32_t UI::drawClockTime(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l,
   setInvert(this->right, dsp.right.triggering);
 
   // Right screen, bottom line, large: HH:MM
+  /*
   sprintf(buffer, "%02d:%02d", dt.hour, dt.minute);
-  this->right.setFont(u8g2_font_logisoso62_tn);
+  this->setFont(this->right, 62);
   this->right.drawStr(0,64,buffer);
+  */
+  sprintf(buffer, "%02d", dt.hour);
+  this->setFont(this->right, 62);
+  this->right.drawStr(0,64-1,buffer);
+  sprintf(buffer, ":");
+  this->setFont(this->right, 62);
+  this->right.drawStr(2*36+12,64-1,buffer);
+  sprintf(buffer, "%02d", dt.minute);
+  this->setFont(this->right, 62);
+  this->right.drawStr(3*36,64-1,buffer);
 
   // Right screen, bottom line continued, medium: :SS
   sprintf(buffer, ":%02d", dt.second);
-  this->right.setFont(u8g2_font_logisoso46_tn);
-  this->right.drawStr(5*36,64,buffer);
+  this->setFont(this->right, 38); // 46
+  this->right.drawStr(5*36+(8),64-1,buffer);
 
   // Right screen, top line, above :SS, small: timezone
   sprintf(buffer, "%.4s", dt.timezone);
-  this->right.setFont(u8g2_font_logisoso16_tr);
-  this->right.drawStr(5*36+26+5*(strlen(dt.timezone.c_str())%2),16,buffer);
+  this->setFont(this->right, 16);
+  this->right.drawStr(5*36+26+5*(strlen(dt.timezone.c_str())%2),16+4,buffer);
 
   beforeSecond = micros();
   this->sendBuffer(this->right);
@@ -170,13 +226,19 @@ uint32_t UI::drawClockTime(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l,
   return deltaSecond;
 }
 bool UI::needToRedrawTime(DisplayContentsTime newDisplayContentsTime) {
+  #ifdef STRESS_TEST_DRAW
+  return true;
+  #endif
   bool need=false;
-  if (this->displayContentsTime.hour != newDisplayContentsTime.hour ||
+  if (this->displayContentsTime.commonDisplayMode==Blank && newDisplayContentsTime.commonDisplayMode==Blank) {
+    need = false;
+  }
+  else if (this->displayContentsTime.hour != newDisplayContentsTime.hour ||
       this->displayContentsTime.minute != newDisplayContentsTime.minute ||
       this->displayContentsTime.second != newDisplayContentsTime.second ||
       this->displayContentsTime.timezone != newDisplayContentsTime.timezone ||
       this->displayContentsTime.colorsInverted != newDisplayContentsTime.colorsInverted || 
-      this->displayContentsTime.screenBlank != newDisplayContentsTime.screenBlank
+      this->displayContentsTime.commonDisplayMode != newDisplayContentsTime.commonDisplayMode
   ) {
     need = true;
   }
@@ -189,10 +251,12 @@ uint32_t UI::drawBlank(U8G2 &screen) {
   screen.drawBox(0, 0, DISP_W, DISP_H);
   screen.setDrawColor(1);
 
+  /*
   screen.drawPixel(0,0);
   screen.drawPixel(0,DISP_H-1);
   screen.drawPixel(DISP_W-1,DISP_H-1);
   screen.drawPixel(DISP_W-1,0);
+  */
 
   before = micros();
   this->sendBuffer(screen);
@@ -201,7 +265,7 @@ uint32_t UI::drawBlank(U8G2 &screen) {
   delta = after - before;
   return delta;
 }
-void UI::drawClock(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l, int lux_r, bool blank){
+void UI::drawClock(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l, int lux_r){
   char buffer[256];
   uint32_t beforeFirst, afterFirst, beforeSecond, afterSecond, deltaFirst=0, deltaSecond=0, jitter;
 
@@ -211,7 +275,7 @@ void UI::drawClock(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l, int lux
 
   bool needToRedrawDate, needToRedrawTime;
   DisplayContentsDate newDisplayContentsDate = {
-    .screenBlank = blank,
+    .commonDisplayMode = this->commonDisplayMode,
     .year = dt.year,
     .month = dt.month,
     .day = dt.day,
@@ -223,7 +287,7 @@ void UI::drawClock(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l, int lux
     .colorsInverted = dsp.left.triggering
   };
   DisplayContentsTime newDisplayContentsTime = {
-    .screenBlank = blank,
+    .commonDisplayMode = this->commonDisplayMode,
     .hour = dt.hour,
     .minute = dt.minute,
     .second = dt.second,
@@ -242,14 +306,14 @@ void UI::drawClock(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l, int lux
   }
   this->displayContentsDate = newDisplayContentsDate;
   if (needToRedrawDate) {
-    if (blank) deltaFirst = this->drawBlank(this->left);
+    if (this->commonDisplayMode==Blank) deltaFirst = this->drawBlank(this->left);
     else deltaFirst = this->drawClockDate(dt, dsp, lux_l, lux_r, netIcon);
   }
 
   needToRedrawTime = this->needToRedrawTime(newDisplayContentsTime);
   this->displayContentsTime = newDisplayContentsTime;
   if (needToRedrawTime) {
-    if (blank) deltaSecond = this->drawBlank(this->right);
+    if (this->commonDisplayMode==Blank) deltaSecond = this->drawBlank(this->right);
     else deltaSecond = this->drawClockTime(dt, dsp, lux_l, lux_r);
   }
 
@@ -263,7 +327,9 @@ void UI::drawClock(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l, int lux
 
   // if any of displays take more than DISPLAY_SENDBUFFER_DURATION_WARN_US to update or if the jitter is more than DISPLAY_SENDBUFFER_JITTER_WARN_US then log a warning, else log as verbose-debug
   int logLevel = (abnoramJitter||unexpectedTimeFirst||unexpectedTimeSecond) ? ARDUHAL_LOG_LEVEL_WARN : ARDUHAL_LOG_LEVEL_VERBOSE;
+  #ifndef STRESS_TEST_DRAW // with debug, actual display time will always be high
   logger.log(logLevel, TAG_DISPLAYS, "drawClock: left sendBuffer took %8ld us, right sendBuffer took %8ld us, jitter was %8ld us", deltaFirst, deltaSecond, jitter);
+  #endif
 }
 void UI::drawSplashScreen(String version){
   this->left.clearBuffer();
@@ -291,8 +357,8 @@ void UI::drawInitScreenSensor(String version, bool leftDistanceSensor, bool left
   char buffer[256];
 
   this->left.clearBuffer();
-  this->left.drawStr(0,20,"UTCMON ver: ");
-  this->left.drawStr(100,20,version.c_str());
+  this->left.drawStr(0,20,"UTCMON ");
+  this->left.drawStr(70,20,version.c_str());
   this->left.drawStr(0,40,"Dist. sensors: ");
   if (leftDistanceSensor) this->left.drawStr(130,40,"_OK_"); else this->left.drawStr(130,40,"FAIL"); 
   if (rightDistanceSensor) this->left.drawStr(180,40,"_OK_"); else this->left.drawStr(180,40,"FAIL"); 

@@ -36,3 +36,4 @@ namespace System {
     extern const size_t timezones_count;
   }
 }
+void sys_config_overrides();

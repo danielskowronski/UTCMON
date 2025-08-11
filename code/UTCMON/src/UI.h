@@ -13,8 +13,9 @@
 #include "DistanceSensors.h"
 #include "hw_config.h"
 
-#define DISPLAY_SENDBUFFER_DURATION_WARN_US 8000
-#define DISPLAY_SENDBUFFER_JITTER_WARN_US   1000
+
+#define DISPLAY_SENDBUFFER_DURATION_WARN_US 20000 // TODO: calculate this value
+#define DISPLAY_SENDBUFFER_JITTER_WARN_US   1000 // 1000
 
 #define DISP_W 256
 #define DISP_H 64
@@ -38,7 +39,7 @@
 #define UIL_DAT_FW (22+2) // spec is 22, char dist is 2
 #define UIL_DAT_FH 38
 #define UIL_DAT_X  0
-#define UIL_DAT_Y  DISP_H
+#define UIL_DAT_Y  DISP_H-1
 #define UIL_DAT_W  UIL_DAT_FW*10 // "YYYY-MM-DD" is 10 characters long
 
 // TODO: implement UIL_XTR_* for using spare space between end of date and end of screen (width: 16px, height: 38px)
@@ -61,8 +62,12 @@
 #define UIL_NTP_X  DISP_W-UIL_NTP_W
 #define UIL_NTP_Y  0
 
-
-
+enum CommonDisplayMode {
+  Normal=0,
+  Hollow,
+  Blank,
+  Count, // Always keep this as the last element to represent the number of modes
+};
 enum DateDisplayMode {
   FullOnlyDate,
   FullAndSensors,
@@ -70,7 +75,7 @@ enum DateDisplayMode {
 };
 
 struct DisplayContentsDate {
-  bool screenBlank;
+  CommonDisplayMode commonDisplayMode;
 
   uint16_t year;
   uint8_t month;
@@ -86,7 +91,7 @@ struct DisplayContentsDate {
   bool colorsInverted;
 };
 struct DisplayContentsTime {
-  bool screenBlank;
+  CommonDisplayMode commonDisplayMode;
 
   uint8_t hour;
   uint8_t minute;
@@ -100,6 +105,7 @@ class UI
 {
 private:
   DateDisplayMode dateDisplayMode = FullOnlyDate;
+  CommonDisplayMode commonDisplayMode = Normal;
   U8G2 left;
   U8G2 right;
   DisplayConfig leftConfig;
@@ -114,6 +120,8 @@ private:
   bool needToRedrawDate(DisplayContentsDate newDisplayContentsDate);
   bool needToRedrawTime(DisplayContentsTime newDisplayContentsTime);
   void setInvert(U8G2 &screen, bool enable);
+  void setFont(U8G2 &screen, u8_t size);
+  void setFont(U8G2 &screen, u8_t size, bool outline);
 public:
   UI(DisplayConfig leftConfig, DisplayConfig rightConfig);
   DevicePairInitSuccess init();
@@ -125,6 +133,16 @@ public:
   void drawInitScreenNetPhase3();
   void drawInitScreenNetPhase4(int driftMs);
   void setDateDisplayMode(DateDisplayMode mode);
-  void drawClock(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l, int lux_r, bool blank);
+  void setCommonDisplayMode(CommonDisplayMode mode);
+  CommonDisplayMode getCommonDisplayMode();
+  void drawClock(DateTimeStruct dt, DistanceStatusPair dsp, int lux_l, int lux_r);
   void setContrast(int contrast);
+  static String commonDisplayModeName(CommonDisplayMode mode) {
+    switch (mode) {
+      case Normal: return "Normal";
+      case Hollow: return "Hollow";
+      case Blank: return "Blank";
+      default: return "Unknown";
+    }
+  }
 };

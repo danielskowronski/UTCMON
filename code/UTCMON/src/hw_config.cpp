@@ -18,8 +18,9 @@ namespace LeftBus {
       .I2CAddress = 0x29,
       .DebugEnabled = false,
       .Mode = Adafruit_VL53L0X::VL53L0X_SENSE_HIGH_SPEED,
-      .TriggeringHoldUs = 300*1000, // 300ms
+      .TriggeringHoldUs = 150*1000, // 150ms
       .TriggeringThreshold = 100, // 10cm
+      .TriggeringIgnore = 20, // 2cm
       .alias = "LEFT "
     };
   }
@@ -51,8 +52,9 @@ namespace RightBus {
       .I2CAddress = 0x29,
       .DebugEnabled = false,
       .Mode = Adafruit_VL53L0X::VL53L0X_SENSE_HIGH_SPEED,
-      .TriggeringHoldUs = 300*1000, // 300ms
+      .TriggeringHoldUs = 150*1000, // 150ms
       .TriggeringThreshold = 100, // 10cm
+      .TriggeringIgnore = 20, // 2cm
       .alias = "RIGHT"
     };
   }

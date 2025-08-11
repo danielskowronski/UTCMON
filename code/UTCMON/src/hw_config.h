@@ -16,7 +16,7 @@ struct DisplayConfig {
 
 #define kHz 1000
 #define MHz 1000000
-#define SPI_FREQUENCY 30*MHz
+#define SPI_FREQUENCY 20*MHz
 
 // FIXME: LeftBust and RightBust should inherit from some SideBus
 

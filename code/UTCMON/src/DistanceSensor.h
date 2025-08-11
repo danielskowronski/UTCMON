@@ -15,6 +15,7 @@ struct DistanceSensorConfig {
 
   uint64_t TriggeringHoldUs;
   uint16_t TriggeringThreshold;
+  uint16_t TriggeringIgnore;
 
   const char* alias;
 };
