@@ -5,7 +5,8 @@
 #include <Adafruit_TSL2561_U.h>
 #include "common.h"
 
-struct LightSensorConfig {
+struct LightSensorConfig
+{
   uint8_t I2CAddress;
   bool DebugEnabled;
   bool AutoRangeEnabled;
@@ -13,8 +14,7 @@ struct LightSensorConfig {
   tsl2561Gain_t Gain;
 };
 
-
-class LightSensors 
+class LightSensors
 {
 
 private:
@@ -23,6 +23,7 @@ private:
   LightSensorConfig leftConfig;
   LightSensorConfig rightConfig;
   int getLight(Adafruit_TSL2561_Unified &sensor);
+
 public:
   LightSensors(LightSensorConfig leftConfig, LightSensorConfig rightConfig);
   DevicePairInitSuccess init();

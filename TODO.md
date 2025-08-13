@@ -55,9 +55,10 @@ internal reference: `DSx2500A`
 - [x] distance sensor - wrap in structs, fix logging and formatting
 - [ ] light sensor - wrap in structs, fix logging and formatting
 - [x] distance sensors / virtual buttons - stabilize output, debug print and display marker for tests
-- [ ] timezone change UI - virtual buttons
-- [ ] brightness control UI - virtual buttons
+- [x] timezone change UI - virtual buttons
+- [x] brightness control UI - virtual buttons
 - [ ] watchdog for abnormal NTP sync -> reboot
+- [ ] invert screen by calling A7/A6 commands instead of draw color swapping (but need to track it)
 
 ## future work
 

@@ -11,7 +11,8 @@ static ExtendedZoneManager zoneManager(
     zonedbx::kZoneAndLinkRegistry,
     zoneProcessorCache);
 
-struct DateTimeStruct {
+struct DateTimeStruct
+{
   int year;
   int month;
   int day;
@@ -24,11 +25,13 @@ struct DateTimeStruct {
   uint64_t timestamp;
 };
 
-class DateTime {
+class DateTime
+{
 public:
-  DateTime(String tz="UTC");
+  DateTime(String tz = "UTC");
   void changeTimezone(String tz_name);
   DateTimeStruct getDateTimeStruct();
+
 private:
   int getIsoWeekNumber(int year, int month, int day);
   DateTimeStruct dt;

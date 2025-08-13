@@ -5,7 +5,8 @@
 #include "DistanceSensor.h"
 
 // Display configuration for U8g2 screens
-struct DisplayConfig {
+struct DisplayConfig
+{
   uint32_t Frequency;
   uint8_t CS;
   uint8_t DC;
@@ -16,53 +17,68 @@ struct DisplayConfig {
 
 #define kHz 1000
 #define MHz 1000000
-#define SPI_FREQUENCY 20*MHz
+#define SPI_FREQUENCY 20 * MHz
 
 // FIXME: LeftBust and RightBust should inherit from some SideBus
 
-namespace LeftBus {
-  namespace I2C {
+namespace LeftBus
+{
+  namespace I2C
+  {
     extern const uint32_t Frequency;
-    enum : uint8_t {
+    enum : uint8_t
+    {
       Bus = 0,
       SDA = 21,
       SCL = 22
     };
   };
-  namespace LightSensor {
+  namespace LightSensor
+  {
     extern const LightSensorConfig config;
   };
-  namespace DistanceSensor {
+  namespace DistanceSensor
+  {
     extern const DistanceSensorConfig config;
   };
-  namespace Display {
+  namespace Display
+  {
     extern const DisplayConfig config;
   };
 }
-namespace RightBus {
-  namespace I2C {
+namespace RightBus
+{
+  namespace I2C
+  {
     extern const uint32_t Frequency;
-    enum : uint8_t {
+    enum : uint8_t
+    {
       Bus = 1,
       SDA = 32,
       SCL = 33
     };
   };
-  namespace LightSensor {
+  namespace LightSensor
+  {
     extern const LightSensorConfig config;
   };
-  namespace DistanceSensor {
+  namespace DistanceSensor
+  {
     extern const DistanceSensorConfig config;
   };
-  namespace Display {
+  namespace Display
+  {
     extern const DisplayConfig config;
   };
 }
-namespace CommonBus {
-  namespace Serial {
+namespace CommonBus
+{
+  namespace Serial
+  {
     extern const uint32_t Baudrate;
   };
-  namespace SPI {
+  namespace SPI
+  {
     extern const uint32_t Frequency;
     extern const int8_t MOSI;
     extern const int8_t MISO;

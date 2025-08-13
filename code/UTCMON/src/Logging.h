@@ -1,14 +1,23 @@
 #pragma once
+
+#define VERSION "v0.3.11a1"
+#ifndef BUILD_DATE
+#define BUILD_DATE "YYYYMMDDHHMM"
+#endif
+#define VER_INFO VERSION " " BUILD_DATE
+
+#define TAG_PREFIX VERSION "|" BUILD_DATE "|" // OR ""
+
 #include <Arduino.h>
 #include <MycilaLogger.h>
 extern Mycila::Logger logger;
-#define TAG_NET      "NETWORK "
-#define TAG_NTP_SYNC "NTP_SYNC"
-#define TAG_NTP_DIAG "NTP_DIAG"
-#define TAG_DISP_RST "DISP_RST"
-#define TAG_LUX      "LUXMETER"
-#define TAG_DIST     "DISTANCE"
-#define TAG_SENSORS  "SENSORS "
-#define TAG_DISPLAYS "DISPLAYS"
-#define TAG_VBUTTONS "VBUTTONS"
-#define TAG_SYS      "SYSTEM  "
+#define TAG_NET TAG_PREFIX "NETWORK "
+#define TAG_NTP_SYNC TAG_PREFIX "NTP_SYNC"
+#define TAG_NTP_DIAG TAG_PREFIX "NTP_DIAG"
+#define TAG_DISP_RST TAG_PREFIX "DISP_RST"
+#define TAG_LUX TAG_PREFIX "LUXMETER"
+#define TAG_DIST TAG_PREFIX "DISTANCE"
+#define TAG_SENSORS TAG_PREFIX "SENSORS "
+#define TAG_DISPLAYS TAG_PREFIX "DISPLAYS"
+#define TAG_VBUTTONS TAG_PREFIX "VBUTTONS"
+#define TAG_SYS TAG_PREFIX "SYSTEM  "

@@ -4,25 +4,29 @@
 #include "Logging.h"
 
 DistanceSensors::DistanceSensors(DistanceSensorConfig leftConfig, DistanceSensorConfig rightConfig, bool /*mockSensor*/)
-  : left(leftConfig, &Wire),
-    right(rightConfig, &Wire1)
+    : left(leftConfig, &Wire),
+      right(rightConfig, &Wire1)
 {
   // mockSensor currently not supported; always initialize real sensors
 }
-DevicePairInitSuccess DistanceSensors::init() {
+DevicePairInitSuccess DistanceSensors::init()
+{
   DevicePairInitSuccess initSuccess;
   initSuccess.left = left.init();
   initSuccess.right = right.init();
   return initSuccess;
 }
-int DistanceSensors::getLeft() {
+int DistanceSensors::getLeft()
+{
   return this->left.getDistance();
 }
-int DistanceSensors::getRight() {
+int DistanceSensors::getRight()
+{
   return this->right.getDistance();
 }
 
-DistanceStatusPair DistanceSensors::getSensorsStatus(){
+DistanceStatusPair DistanceSensors::getSensorsStatus()
+{
   DistanceStatusPair status;
   status.left = this->left.getSensorStatus();
   status.right = this->right.getSensorStatus();

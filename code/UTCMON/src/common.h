@@ -1,6 +1,7 @@
 #pragma once
 
-struct DevicePairInitSuccess {
+struct DevicePairInitSuccess
+{
   bool left;
   bool right;
 };

@@ -1,9 +1,3 @@
-#define VERSION "v0.3.10"
-#ifndef BUILD_DATE
-  #define BUILD_DATE "YYYY-MM-DD"
-#endif
-#define VER_INFO VERSION " " BUILD_DATE
-
 #include <Arduino.h>
 #include <esp_wifi.h>
 #include "hw_config.h"
@@ -191,6 +185,10 @@ void setup() {
 
   WiFiConnect(true);
   //WiFi.onEvent(WiFiStationDisconnected, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
+
+  #ifdef STRESS_TEST_U8G2
+  ui.debugLoop();
+  #endif
 
   #ifdef STRESS_TEST_CLOBBER
   startRmtClobber(5);
